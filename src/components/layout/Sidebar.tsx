@@ -46,12 +46,9 @@ const patientNavItems: NavItem[] = [
 ];
 
 const doctorNavItems: NavItem[] = [
-  { label: 'Dashboard', href: '/doctor', icon: Home },
   { label: 'Patient Queue', href: '/doctor/queue', icon: Users },
-  { label: 'Consultations', href: '/doctor/consultations', icon: Stethoscope },
   { label: 'Video Consult', href: '/doctor/video', icon: Video },
-  { label: 'Prescriptions', href: '/doctor/prescriptions', icon: ClipboardList },
-  { label: 'Pharmacy', href: '/doctor/pharmacy', icon: Pill },
+  { label: 'Consultations', href: '/doctor/consultations', icon: Stethoscope },
 ];
 
 const adminNavItems: NavItem[] = [

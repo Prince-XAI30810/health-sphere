@@ -24,6 +24,7 @@ import MedicineWallet from "./pages/patient/MedicineWallet";
 // Doctor Pages
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import ConsultationRoom from "./pages/doctor/ConsultationRoom";
+import VideoConsult from "./pages/doctor/VideoConsult";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -178,7 +179,7 @@ const AppRoutes = () => {
         path="/doctor/video"
         element={
           <ProtectedRoute allowedRoles={["doctor"]}>
-            <ConsultationRoom />
+            <VideoConsult />
           </ProtectedRoute>
         }
       />
