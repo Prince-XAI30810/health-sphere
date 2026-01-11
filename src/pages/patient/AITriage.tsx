@@ -15,6 +15,8 @@ import {
   Clock,
   Plus,
   MessageSquare,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 
 interface TriageSession {
@@ -52,7 +54,10 @@ export const AITriage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,6 +66,54 @@ export const AITriage: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    // Check if browser supports Speech Recognition
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (SpeechRecognition) {
+      setIsSpeechSupported(true);
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join('');
+        setInput(prev => prev + (prev ? ' ' : '') + transcript);
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        if (event.error === 'no-speech') {
+          alert('No speech detected. Please try again.');
+        } else if (event.error === 'not-allowed') {
+          alert('Microphone permission denied. Please enable microphone access.');
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
 
   const simulateBotResponse = (userMessage: string) => {
     setIsTyping(true);
@@ -117,6 +170,23 @@ export const AITriage: React.FC = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     simulateBotResponse(input);
+  };
+
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      try {
+        recognitionRef.current.start();
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+      }
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
   };
 
   const getTriageIcon = (level?: 'high' | 'medium' | 'low') => {
@@ -281,19 +351,47 @@ export const AITriage: React.FC = () => {
           {/* Input */}
           <form onSubmit={handleSubmit} className="p-4 border-t border-border bg-card flex-shrink-0">
             <div className="flex gap-3">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Describe your symptoms..."
-                className="flex-1 h-12"
-                disabled={isTyping}
-              />
-              <Button type="submit" size="lg" disabled={!input.trim() || isTyping}>
+              <div className="relative flex-1">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Describe your symptoms..."
+                  className="h-12 pr-12"
+                  disabled={isTyping || isListening}
+                />
+                {isSpeechSupported && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={isListening ? stopListening : startListening}
+                    disabled={isTyping}
+                  >
+                    {isListening ? (
+                      <div className="relative">
+                        <Mic className="w-5 h-5 text-destructive animate-pulse" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full animate-ping"></span>
+                      </div>
+                    ) : (
+                      <Mic className="w-5 h-5 text-muted-foreground hover:text-primary" />
+                    )}
+                  </Button>
+                )}
+              </div>
+              <Button type="submit" size="lg" disabled={!input.trim() || isTyping || isListening}>
                 <Send className="w-5 h-5" />
               </Button>
             </div>
+            {isListening && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-destructive">
+                <Mic className="w-4 h-4 animate-pulse" />
+                <span>Listening... Speak now</span>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-2 text-center">
               ⚠️ This is an AI assessment tool. For emergencies, call 108 immediately.
+              {isSpeechSupported && ' • Click the microphone icon to speak your symptoms'}
             </p>
           </form>
         </div>

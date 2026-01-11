@@ -15,6 +15,10 @@ import AITriage from "./pages/patient/AITriage";
 import Telehealth from "./pages/patient/Telehealth";
 import Billing from "./pages/patient/Billing";
 import HealthRecords from "./pages/patient/HealthRecords";
+import Medications from "./pages/patient/Medications";
+import Appointments from "./pages/patient/Appointments";
+import Prescriptions from "./pages/patient/Prescriptions";
+import Notifications from "./pages/patient/Notifications";
 
 // Doctor Pages
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -99,7 +103,7 @@ const AppRoutes = () => {
         path="/patient/appointments"
         element={
           <ProtectedRoute allowedRoles={["patient"]}>
-            <PatientDashboard />
+            <Appointments />
           </ProtectedRoute>
         }
       />
@@ -115,7 +119,23 @@ const AppRoutes = () => {
         path="/patient/notifications"
         element={
           <ProtectedRoute allowedRoles={["patient"]}>
-            <PatientDashboard />
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/prescriptions"
+        element={
+          <ProtectedRoute allowedRoles={["patient"]}>
+            <Prescriptions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/medications"
+        element={
+          <ProtectedRoute allowedRoles={["patient"]}>
+            <Medications />
           </ProtectedRoute>
         }
       />

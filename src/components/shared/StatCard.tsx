@@ -27,6 +27,16 @@ export const StatCard: React.FC<StatCardProps> = ({
     neutral: 'text-muted-foreground',
   };
 
+  // Map icon colors to background colors
+  const getBackgroundColor = (iconColor: string) => {
+    if (iconColor === 'text-primary') return 'bg-primary/10';
+    if (iconColor === 'text-secondary') return 'bg-secondary/10';
+    if (iconColor === 'text-warning') return 'bg-warning/10';
+    if (iconColor === 'text-success') return 'bg-success/10';
+    if (iconColor === 'text-destructive') return 'bg-destructive/10';
+    return 'bg-primary/10';
+  };
+
   return (
     <div className={cn('card-stat animate-fade-in', className)}>
       <div className="flex items-start justify-between">
@@ -39,7 +49,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             </p>
           )}
         </div>
-        <div className={cn('p-3 rounded-xl bg-primary/10', iconColor.replace('text-', 'bg-').replace('primary', 'primary/10'))}>
+        <div className={cn('p-3 rounded-xl', getBackgroundColor(iconColor))}>
           <Icon className={cn('w-6 h-6', iconColor)} />
         </div>
       </div>

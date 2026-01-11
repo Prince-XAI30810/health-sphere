@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Bell, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   title,
   subtitle,
 }) => {
+  const { user } = useAuth();
+  const isPatient = user?.role === 'patient';
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
@@ -29,13 +33,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               )}
             </div>
             <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  className="pl-10 w-64 bg-muted/50 border-0 focus-visible:ring-1"
-                />
-              </div>
+              {!isPatient && (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search..."
+                    className="pl-10 w-64 bg-muted/50 border-0 focus-visible:ring-1"
+                  />
+                </div>
+              )}
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
