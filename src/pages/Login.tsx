@@ -198,14 +198,7 @@ export const Login: React.FC = () => {
               </div>
             </div>
 
-            {/* Demo Notice */}
-            <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
-              <p className="text-sm text-primary font-medium">🎯 Demo Mode</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Select a role and click login to explore the {role} portal.
-                No credentials required for demo.
-              </p>
-            </div>
+
 
             {/* Submit */}
             <Button
