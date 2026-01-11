@@ -80,7 +80,7 @@ export const AITriage: React.FC = () => {
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string; doctorId: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -624,85 +624,57 @@ export const AITriage: React.FC = () => {
                               {message.recommendedDoctor.available_slots
                                 .filter(slot => slot.available)
                                 .slice(0, 3)
-                                .map((slot, idx) => (
-                                  <Button
-                                    key={idx}
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-xs"
-                                    onClick={async (e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      
-                                      if (!message.recommendedDoctor || !user) {
-                                        toast.error('Please login to schedule an appointment');
-                                        return;
-                                      }
-                                      
-                                      try {
-                                        const requestBody = {
-                                          patient_id: user.id,
-                                          patient_name: user.name,
-                                          patient_email: user.email,
-                                          doctor_id: message.recommendedDoctor.id,
-                                          doctor_name: message.recommendedDoctor.name,
-                                          appointment_date: slot.date,
-                                          appointment_time: slot.time,
-                                          reason: messages.find(m => m.recommendedDoctor)?.content || 'Triage recommendation',
-                                          triage_session_id: sessionId,
-                                          symptoms: messages.find(m => m.type === 'user')?.content || '',
-                                          pain_rating: null,
-                                        };
+                                .map((slot, idx) => {
+                                  const isSelected = selectedSlot?.date === slot.date && 
+                                                    selectedSlot?.time === slot.time && 
+                                                    selectedSlot?.doctorId === message.recommendedDoctor.id;
+                                  return (
+                                    <Button
+                                      key={idx}
+                                      type="button"
+                                      size="sm"
+                                      variant={isSelected ? "default" : "outline"}
+                                      className={`text-xs ${isSelected ? 'bg-primary text-primary-foreground' : ''}`}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
                                         
-                                        const response = await fetch(`${API_BASE_URL}/api/appointments/schedule`, {
-                                          method: 'POST',
-                                          headers: {
-                                            'Content-Type': 'application/json',
-                                          },
-                                          body: JSON.stringify(requestBody),
-                                        });
-                                        
-                                        if (!response.ok) {
-                                          const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-                                          throw new Error(errorData.detail || 'Failed to schedule appointment');
+                                        if (!message.recommendedDoctor || !user) {
+                                          toast.error('Please login to schedule an appointment');
+                                          return;
                                         }
                                         
-                                        const data = await response.json();
-                                        toast.success('Appointment scheduled successfully!', {
-                                          description: `Appointment with ${message.recommendedDoctor.name} on ${slot.date} at ${slot.time}`,
+                                        // Select the slot
+                                        setSelectedSlot({
+                                          date: slot.date,
+                                          time: slot.time,
+                                          doctorId: message.recommendedDoctor.id
                                         });
-                                      } catch (error) {
-                                        console.error('Error scheduling appointment:', error);
-                                        const errorMessage = error instanceof Error ? error.message : 'Failed to schedule appointment';
-                                        toast.error('Failed to schedule appointment', {
-                                          description: errorMessage,
-                                        });
-                                      }
-                                    }}
-                                  >
-                                    <Calendar className="w-3 h-3 mr-1" />
-                                    {slot.date} {slot.time}
-                                  </Button>
-                                ))}
+                                        setSelectedDoctor(message.recommendedDoctor);
+                                      }}
+                                    >
+                                      <Calendar className="w-3 h-3 mr-1" />
+                                      {slot.date} {slot.time}
+                                    </Button>
+                                  );
+                                })}
                             </div>
+                            {selectedSlot && selectedSlot.doctorId === message.recommendedDoctor.id && (
+                              <div className="mt-2 p-2 bg-primary/10 rounded-lg border border-primary/20">
+                                <p className="text-xs font-medium text-primary">
+                                  ✓ Selected: {selectedSlot.date} at {selectedSlot.time}
+                                </p>
+                              </div>
+                            )}
                           </div>
                           <Button
                             type="button"
                             className="w-full mt-3 cursor-pointer"
                             size="sm"
-                            disabled={!message.recommendedDoctor || !user || !message.recommendedDoctor.available_slots?.some((s: any) => s.available)}
+                            disabled={!message.recommendedDoctor || !user || !selectedSlot || selectedSlot.doctorId !== message.recommendedDoctor.id}
                             onClick={async (e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              
-                              console.log('Schedule Appointment button clicked', { 
-                                hasDoctor: !!message.recommendedDoctor, 
-                                hasUser: !!user,
-                                doctor: message.recommendedDoctor,
-                                user: user,
-                                availableSlots: message.recommendedDoctor?.available_slots
-                              });
                               
                               if (!message.recommendedDoctor) {
                                 toast.error('Doctor information not available');
@@ -714,28 +686,36 @@ export const AITriage: React.FC = () => {
                                 return;
                               }
                               
-                              // Find the first available slot
-                              const availableSlot = message.recommendedDoctor.available_slots
-                                ?.find((slot: any) => slot.available);
-                              
-                              if (!availableSlot) {
-                                toast.error('No available slots');
+                              if (!selectedSlot || selectedSlot.doctorId !== message.recommendedDoctor.id) {
+                                toast.error('Please select a time slot first');
                                 return;
                               }
                               
                               try {
+                                // Get collected info from conversation for better symptom extraction
+                                let symptoms = '';
+                                let painRating = null;
+                                try {
+                                  const conversation = await fetch(`${API_BASE_URL}/api/triage/conversation/${sessionId}`).then(r => r.json());
+                                  const collectedInfo = conversation.collected_info || {};
+                                  symptoms = collectedInfo.issue || messages.find(m => m.type === 'user')?.content || '';
+                                  painRating = collectedInfo.pain_rating || null;
+                                } catch (e) {
+                                  symptoms = messages.find(m => m.type === 'user')?.content || '';
+                                }
+                                
                                 const requestBody = {
-                                  patient_id: user.id,
-                                  patient_name: user.name,
-                                  patient_email: user.email,
-                                  doctor_id: message.recommendedDoctor.id,
-                                  doctor_name: message.recommendedDoctor.name,
-                                  appointment_date: availableSlot.date,
-                                  appointment_time: availableSlot.time,
-                                  reason: messages.find(m => m.recommendedDoctor)?.content || 'Triage recommendation',
-                                  triage_session_id: sessionId,
-                                  symptoms: messages.find(m => m.type === 'user')?.content || '',
-                                  pain_rating: null,
+                                  patient_id: user.id || '',
+                                  patient_name: user.name || '',
+                                  patient_email: user.email || '',
+                                  doctor_id: message.recommendedDoctor.id || '',
+                                  doctor_name: message.recommendedDoctor.name || '',
+                                  appointment_date: selectedSlot.date || '',
+                                  appointment_time: selectedSlot.time || '',
+                                  reason: 'Appointment notes will be generated automatically', // Backend will generate proper notes
+                                  triage_session_id: sessionId || null,
+                                  symptoms: symptoms || null,
+                                  pain_rating: painRating !== null && painRating !== undefined ? String(painRating) : null,
                                 };
                                 
                                 console.log('Scheduling appointment with:', requestBody);
@@ -749,20 +729,56 @@ export const AITriage: React.FC = () => {
                                 });
                                 
                                 if (!response.ok) {
-                                  const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-                                  throw new Error(errorData.detail || 'Failed to schedule appointment');
+                                  let errorMessage = 'Failed to schedule appointment';
+                                  try {
+                                    const errorData = await response.json();
+                                    // Handle different error response formats
+                                    if (errorData.detail) {
+                                      errorMessage = typeof errorData.detail === 'string' 
+                                        ? errorData.detail 
+                                        : JSON.stringify(errorData.detail);
+                                    } else if (errorData.message) {
+                                      errorMessage = typeof errorData.message === 'string'
+                                        ? errorData.message
+                                        : JSON.stringify(errorData.message);
+                                    } else if (typeof errorData === 'string') {
+                                      errorMessage = errorData;
+                                    } else {
+                                      errorMessage = JSON.stringify(errorData);
+                                    }
+                                  } catch (parseError) {
+                                    // If response is not JSON, try to get text
+                                    try {
+                                      const text = await response.text();
+                                      errorMessage = text || `HTTP ${response.status}: ${response.statusText}`;
+                                    } catch (textError) {
+                                      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                                    }
+                                  }
+                                  throw new Error(errorMessage);
                                 }
                                 
                                 const data = await response.json();
                                 toast.success('Appointment scheduled successfully!', {
-                                  description: `Appointment with ${message.recommendedDoctor.name} on ${availableSlot.date} at ${availableSlot.time}`,
+                                  description: `Appointment with ${message.recommendedDoctor.name} on ${selectedSlot.date} at ${selectedSlot.time}`,
                                 });
+                                
+                                // Clear selected slot and doctor
+                                setSelectedSlot(null);
+                                setSelectedDoctor(null);
                                 
                                 // Optionally refresh or update UI
                                 console.log('Appointment scheduled:', data);
                               } catch (error) {
                                 console.error('Error scheduling appointment:', error);
-                                const errorMessage = error instanceof Error ? error.message : 'Failed to schedule appointment';
+                                let errorMessage = 'Failed to schedule appointment';
+                                if (error instanceof Error) {
+                                  errorMessage = error.message;
+                                } else if (typeof error === 'string') {
+                                  errorMessage = error;
+                                } else {
+                                  errorMessage = JSON.stringify(error);
+                                }
                                 toast.error('Failed to schedule appointment', {
                                   description: errorMessage,
                                 });
@@ -933,17 +949,17 @@ export const AITriage: React.FC = () => {
                   const collectedInfo = conversation.collected_info || {};
                   
                   const requestBody = {
-                    patient_id: user.id,
-                    patient_name: user.name,
-                    patient_email: user.email,
-                    doctor_id: selectedDoctor.id,
-                    doctor_name: selectedDoctor.name,
-                    appointment_date: selectedSlot.date,
-                    appointment_time: selectedSlot.time,
-                    reason: messages.find(m => m.recommendedDoctor)?.content || 'Triage recommendation',
-                    triage_session_id: sessionId,
-                    symptoms: collectedInfo.issue || messages.find(m => m.type === 'user')?.content || '',
-                    pain_rating: collectedInfo.pain_rating || null,
+                    patient_id: user.id || '',
+                    patient_name: user.name || '',
+                    patient_email: user.email || '',
+                    doctor_id: selectedDoctor.id || '',
+                    doctor_name: selectedDoctor.name || '',
+                    appointment_date: selectedSlot.date || '',
+                    appointment_time: selectedSlot.time || '',
+                    reason: 'Appointment notes will be generated automatically', // Backend will generate proper notes
+                    triage_session_id: sessionId || null,
+                    symptoms: collectedInfo.issue || messages.find(m => m.type === 'user')?.content || null,
+                    pain_rating: collectedInfo.pain_rating !== null && collectedInfo.pain_rating !== undefined ? String(collectedInfo.pain_rating) : null,
                   };
                   
                   console.log('Scheduling appointment with:', requestBody);
@@ -957,8 +973,38 @@ export const AITriage: React.FC = () => {
                   });
                   
                   if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-                    throw new Error(errorData.detail || 'Failed to schedule appointment');
+                    let errorMessage = 'Failed to schedule appointment';
+                    try {
+                      const errorData = await response.json();
+                      // Handle FastAPI validation errors (422)
+                      if (Array.isArray(errorData.detail)) {
+                        // Validation errors are in array format
+                        const errors = errorData.detail.map((err: any) => {
+                          const field = err.loc ? err.loc.join('.') : 'field';
+                          return `${field}: ${err.msg || 'validation error'}`;
+                        });
+                        errorMessage = errors.join(', ');
+                      } else if (errorData.detail) {
+                        errorMessage = typeof errorData.detail === 'string' 
+                          ? errorData.detail 
+                          : JSON.stringify(errorData.detail);
+                      } else if (errorData.message) {
+                        errorMessage = typeof errorData.message === 'string'
+                          ? errorData.message
+                          : JSON.stringify(errorData.message);
+                      } else {
+                        errorMessage = JSON.stringify(errorData);
+                      }
+                    } catch (parseError) {
+                      // If response is not JSON, try to get text
+                      try {
+                        const text = await response.text();
+                        errorMessage = text || `HTTP ${response.status}: ${response.statusText}`;
+                      } catch (textError) {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                      }
+                    }
+                    throw new Error(errorMessage);
                   }
                   
                   const data = await response.json();
@@ -973,7 +1019,14 @@ export const AITriage: React.FC = () => {
                   console.log('Appointment scheduled:', data);
                 } catch (error) {
                   console.error('Error scheduling appointment:', error);
-                  const errorMessage = error instanceof Error ? error.message : 'Failed to schedule appointment';
+                  let errorMessage = 'Failed to schedule appointment';
+                  if (error instanceof Error) {
+                    errorMessage = error.message;
+                  } else if (typeof error === 'string') {
+                    errorMessage = error;
+                  } else {
+                    errorMessage = JSON.stringify(error);
+                  }
                   toast.error('Failed to schedule appointment', {
                     description: errorMessage,
                   });

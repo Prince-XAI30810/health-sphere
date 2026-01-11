@@ -97,6 +97,12 @@ class ScheduleAppointmentRequest(BaseModel):
     triage_session_id: Optional[str] = None
     symptoms: Optional[str] = None
     pain_rating: Optional[str] = None
+    
+    class Config:
+        # Allow None values for optional fields
+        json_encoders = {
+            type(None): lambda v: None
+        }
 
 
 class AppointmentResponse(BaseModel):
@@ -114,6 +120,9 @@ class AppointmentResponse(BaseModel):
     triage_session_id: Optional[str] = None
     symptoms: Optional[str] = None
     pain_rating: Optional[str] = None
+    diagnosis: Optional[str] = None
+    doctor_notes: Optional[str] = None
+    ai_summary: Optional[List[str]] = None
 
 
 class ScheduleAppointmentResponse(BaseModel):

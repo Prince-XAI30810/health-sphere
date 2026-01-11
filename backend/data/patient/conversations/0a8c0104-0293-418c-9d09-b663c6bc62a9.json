@@ -1,13 +1,13 @@
 {
-  "session_id": "827a02d0-6a4a-46e7-b061-836cae0560a4",
+  "session_id": "0a8c0104-0293-418c-9d09-b663c6bc62a9",
   "user_id": null,
-  "created_at": "2026-01-12T00:24:26.821146",
+  "created_at": "2026-01-12T01:15:22.428403",
   "messages": [
     {
       "id": 1,
       "type": "bot",
       "content": "Hello! I'm MediVerse's AI Health Assistant. I'm here to help assess your symptoms and guide you to the right care. Let's start by understanding your health concern. What health issue or symptom are you experiencing today?",
-      "timestamp": "2026-01-12T00:24:26.821146",
+      "timestamp": "2026-01-12T01:15:22.428403",
       "metadata": {
         "question_type": "issue",
         "collected_info": {
@@ -20,15 +20,15 @@
     {
       "id": 2,
       "type": "user",
-      "content": "i am having chest pain ",
-      "timestamp": "2026-01-12T00:24:40.116004",
+      "content": "Hii i am hacing chest pain ",
+      "timestamp": "2026-01-12T01:15:35.700665",
       "metadata": {}
     },
     {
       "id": 3,
       "type": "bot",
-      "content": "On a scale of 1 to 10, how would you rate your pain or discomfort? (1 being very mild and 10 being extremely severe)",
-      "timestamp": "2026-01-12T00:24:40.133512",
+      "content": "I'm sorry to hear that you're experiencing chest pain. On a scale of 1 to 10, how would you rate your pain or discomfort? (1 being very mild and 10 being extremely severe)",
+      "timestamp": "2026-01-12T01:15:35.700665",
       "metadata": {
         "question_type": "pain_rating",
         "collected_info": {
@@ -42,21 +42,21 @@
     {
       "id": 4,
       "type": "user",
-      "content": "i would say 7v",
-      "timestamp": "2026-01-12T00:24:49.181829",
+      "content": "i am having from past 10 days ",
+      "timestamp": "2026-01-12T01:15:54.601005",
       "metadata": {}
     },
     {
       "id": 5,
       "type": "bot",
-      "content": "How long have you been experiencing this? When did it start?",
-      "timestamp": "2026-01-12T00:24:49.181829",
+      "content": "On a scale of 1 to 10, how would you rate your pain or discomfort? (1 being very mild and 10 being extremely severe)",
+      "timestamp": "2026-01-12T01:15:54.617690",
       "metadata": {
-        "question_type": "duration",
+        "question_type": "pain_rating",
         "collected_info": {
           "issue": "chest pain",
-          "pain_rating": 7,
-          "duration": null
+          "pain_rating": null,
+          "duration": "10 days"
         },
         "is_complete": false
       }
@@ -64,21 +64,21 @@
     {
       "id": 6,
       "type": "user",
-      "content": "from past 3 days ",
-      "timestamp": "2026-01-12T00:24:57.831099",
+      "content": "i would say 3",
+      "timestamp": "2026-01-12T01:16:07.541799",
       "metadata": {}
     },
     {
       "id": 7,
       "type": "bot",
       "content": "Based on your symptoms, I recommend consulting with Dr. Rajesh Kumar, a Cardiologist.\n\n**Doctor Details:**\n- Name: Dr. Rajesh Kumar\n- Specialty: Cardiologist\n- Qualifications: MBBS, MD (Cardiology), DM (Cardiology)\n- Experience: 15 years\n- Rating: 4.9/5.0\n\n**Available Appointment Slots:**\n- 2026-01-12 at 11:00 AM\n- 2026-01-12 at 3:00 PM\n- 2026-01-13 at 10:00 AM\n",
-      "timestamp": "2026-01-12T00:24:57.832172",
+      "timestamp": "2026-01-12T01:16:07.545809",
       "metadata": {
-        "question_type": null,
+        "question_type": "duration",
         "collected_info": {
           "issue": "chest pain",
-          "pain_rating": 7,
-          "duration": "3 days"
+          "pain_rating": 3,
+          "duration": "10 days"
         },
         "is_complete": true,
         "recommended_doctor": {
@@ -118,8 +118,8 @@
   ],
   "collected_info": {
     "issue": "chest pain",
-    "pain_rating": 7,
-    "duration": "3 days"
+    "pain_rating": 3,
+    "duration": "10 days"
   },
   "status": "completed"
 }

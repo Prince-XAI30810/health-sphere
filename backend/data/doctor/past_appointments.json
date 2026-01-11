@@ -1,0 +1,130 @@
+{
+  "appointments": [
+    {
+      "appointment_id": "past-001",
+      "patient_id": "p1",
+      "patient_name": "Rahul Sharma",
+      "patient_email": "patient@mediverse.com",
+      "doctor_id": "doc1",
+      "doctor_name": "Dr. Priya Patel",
+      "appointment_date": "2025-12-20",
+      "appointment_time": "2:30 PM",
+      "status": "completed",
+      "reason": "Routine health checkup",
+      "created_at": "2025-12-15T10:00:00",
+      "triage_session_id": null,
+      "symptoms": "General health checkup",
+      "pain_rating": null,
+      "diagnosis": "Upper Respiratory Infection",
+      "doctor_notes": "Patient presented with fever, cough, and mild congestion. Vitals stable. Recommended symptomatic treatment and rest.",
+      "ai_summary": [
+        "Doctor diagnosed upper respiratory infection with stable vitals",
+        "Recommended symptomatic treatment including rest and hydration",
+        "No antibiotics prescribed - viral infection suspected",
+        "Follow-up recommended if symptoms persist beyond 5 days",
+        "Patient advised to monitor temperature and seek care if fever exceeds 101°F"
+      ]
+    },
+    {
+      "appointment_id": "past-002",
+      "patient_id": "p1",
+      "patient_name": "Rahul Sharma",
+      "patient_email": "patient@mediverse.com",
+      "doctor_id": "doc2",
+      "doctor_name": "Dr. Rajesh Kumar",
+      "appointment_date": "2025-12-15",
+      "appointment_time": "11:00 AM",
+      "status": "completed",
+      "reason": "Cardiac evaluation",
+      "created_at": "2025-12-10T09:00:00",
+      "triage_session_id": null,
+      "symptoms": "Routine cardiac checkup",
+      "pain_rating": null,
+      "diagnosis": "Routine Cardiac Checkup",
+      "doctor_notes": "Annual cardiac evaluation. Lipid profile shows borderline LDL. Blood pressure well controlled. Recommended dietary modifications and regular exercise. Follow-up in 3 months.",
+      "ai_summary": [
+        "Routine cardiac checkup completed with overall good cardiovascular health",
+        "Borderline LDL cholesterol (145 mg/dL) - dietary modifications recommended",
+        "Blood pressure well controlled at 135/88 mmHg",
+        "Doctor emphasized importance of regular exercise and omega-3 intake",
+        "Next follow-up scheduled for March 2026 to monitor cholesterol levels"
+      ]
+    },
+    {
+      "appointment_id": "past-003",
+      "patient_id": "p1",
+      "patient_name": "Rahul Sharma",
+      "patient_email": "patient@mediverse.com",
+      "doctor_id": "doc3",
+      "doctor_name": "Dr. Sarah Khan",
+      "appointment_date": "2025-11-20",
+      "appointment_time": "4:00 PM",
+      "status": "completed",
+      "reason": "Thyroid function evaluation",
+      "created_at": "2025-11-15T14:00:00",
+      "triage_session_id": null,
+      "symptoms": "Fatigue and weight gain",
+      "pain_rating": null,
+      "diagnosis": "Thyroid Function Evaluation",
+      "doctor_notes": "TSH elevated at 6.8 mIU/L indicating mild hypothyroidism. Patient reports fatigue and weight gain. Prescribed Levothyroxine 50mcg daily. Follow-up in 6 weeks to recheck TSH levels.",
+      "ai_summary": [
+        "Diagnosed with mild hypothyroidism based on elevated TSH (6.8 mIU/L)",
+        "Doctor prescribed Levothyroxine 50mcg daily to normalize thyroid function",
+        "Patient symptoms include fatigue and weight gain - common with hypothyroidism",
+        "Follow-up appointment scheduled in 6 weeks to monitor medication effectiveness",
+        "Doctor advised taking medication on empty stomach 30 minutes before breakfast"
+      ]
+    },
+    {
+      "appointment_id": "past-004",
+      "patient_id": "p1",
+      "patient_name": "Rahul Sharma",
+      "patient_email": "patient@mediverse.com",
+      "doctor_id": "doc1",
+      "doctor_name": "Dr. Priya Patel",
+      "appointment_date": "2025-10-25",
+      "appointment_time": "3:30 PM",
+      "status": "completed",
+      "reason": "Annual health examination",
+      "created_at": "2025-10-20T11:00:00",
+      "triage_session_id": null,
+      "symptoms": "Routine checkup",
+      "pain_rating": null,
+      "diagnosis": "Routine Health Checkup",
+      "doctor_notes": "Annual health examination. All vitals within normal range. Discussed preventive care measures. Recommended flu vaccination and updated tetanus booster.",
+      "ai_summary": [
+        "Annual health checkup completed with all vitals in normal range",
+        "Doctor recommended flu vaccination and tetanus booster update",
+        "Preventive care measures discussed including regular exercise and balanced diet",
+        "No immediate health concerns identified during examination",
+        "Next annual checkup scheduled for October 2026"
+      ]
+    },
+    {
+      "appointment_id": "past-005",
+      "patient_id": "p1",
+      "patient_name": "Rahul Sharma",
+      "patient_email": "patient@mediverse.com",
+      "doctor_id": "doc2",
+      "doctor_name": "Dr. Rajesh Kumar",
+      "appointment_date": "2025-09-10",
+      "appointment_time": "10:00 AM",
+      "status": "completed",
+      "reason": "Chest pain evaluation",
+      "created_at": "2025-09-05T08:00:00",
+      "triage_session_id": null,
+      "symptoms": "Occasional chest discomfort",
+      "pain_rating": "4",
+      "diagnosis": "Chest Pain Evaluation",
+      "doctor_notes": "Patient reported occasional chest discomfort. ECG normal, no signs of cardiac issues. Likely musculoskeletal. Recommended stress management and follow-up if symptoms worsen.",
+      "ai_summary": [
+        "Chest pain evaluation completed - ECG showed normal results",
+        "No cardiac issues detected, likely musculoskeletal in nature",
+        "Doctor recommended stress management techniques and lifestyle modifications",
+        "Patient advised to monitor symptoms and return if chest pain becomes frequent",
+        "Reassurance provided that cardiac health appears stable"
+      ]
+    }
+  ]
+}
+

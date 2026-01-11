@@ -822,9 +822,16 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
             appointments
               .filter(apt => apt.status === 'scheduled')
               .map((appointment) => {
-                const summary = patientSummaries[appointment.patient_id];
-                const triageLevel = appointment.pain_rating 
-                  ? (parseInt(appointment.pain_rating) <= 3 ? 'low' : parseInt(appointment.pain_rating) <= 6 ? 'medium' : 'high')
+                // Get summary using appointment_id (as stored in patientSummaries)
+                const summary = patientSummaries[appointment.appointment_id];
+                // Get triage level from queue data or calculate from pain_rating
+                const queueData = appointment.queue_data || {};
+                const triageScore = queueData.triage_score || 
+                  (appointment.pain_rating 
+                    ? (parseInt(appointment.pain_rating) <= 3 ? 'low' : parseInt(appointment.pain_rating) <= 6 ? 'medium' : 'high')
+                    : 'medium');
+                const triageLevel = (triageScore === 'high' || triageScore === 'medium' || triageScore === 'low') 
+                  ? triageScore 
                   : 'medium';
                 
                 return (
@@ -867,10 +874,16 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                       <p className="text-xs text-muted-foreground line-clamp-2">
                         {appointment.symptoms || appointment.reason || 'No complaint provided'}
                       </p>
-                      {summary && (
+                      {summary && summary.summary && (
                         <div className="mt-2 p-2 bg-muted rounded text-xs">
                           <p className="font-medium mb-1">AI Summary:</p>
                           <p className="text-muted-foreground line-clamp-2">{summary.summary}</p>
+                        </div>
+                      )}
+                      {queueData.summary && !summary && (
+                        <div className="mt-2 p-2 bg-muted rounded text-xs">
+                          <p className="font-medium mb-1">AI Summary:</p>
+                          <p className="text-muted-foreground line-clamp-2">{queueData.summary}</p>
                         </div>
                       )}
                     </div>
@@ -952,15 +965,32 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
               </SheetHeader>
               
               {/* AI Patient Summary */}
-              {patientSummaries[selectedPatient.id] && (
+              {(patientSummaries[selectedPatient.id] || appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data) && (
                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-primary" />
                     <h4 className="font-semibold text-sm text-foreground">AI-Generated Patient Summary</h4>
                   </div>
                   <p className="text-sm text-muted-foreground whitespace-pre-line">
-                    {patientSummaries[selectedPatient.id].summary}
+                    {patientSummaries[selectedPatient.id]?.summary || 
+                     appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.summary ||
+                     'No summary available'}
                   </p>
+                  {(patientSummaries[selectedPatient.id]?.recommended_actions || 
+                    appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.key_points) && (
+                    <div className="mt-3 pt-3 border-t border-primary/20">
+                      <p className="text-xs font-medium text-foreground mb-2">Key Points:</p>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        {(patientSummaries[selectedPatient.id]?.recommended_actions || 
+                          appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.key_points || []).map((point: string, idx: number) => (
+                          <li key={idx} className="flex gap-2">
+                            <span className="text-primary">•</span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
 

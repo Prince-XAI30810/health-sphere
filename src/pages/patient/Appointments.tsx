@@ -275,16 +275,30 @@ export const Appointments: React.FC = () => {
 
             try {
                 setIsLoading(true);
-                const response = await fetch(`${API_BASE_URL}/api/appointments/patient/${user.id}`);
                 
-                if (!response.ok) {
+                // Fetch upcoming appointments
+                const upcomingResponse = await fetch(`${API_BASE_URL}/api/appointments/patient/${user.id}`);
+                if (!upcomingResponse.ok) {
                     throw new Error('Failed to fetch appointments');
                 }
-
-                const data = await response.json();
+                const upcomingData = await upcomingResponse.json();
+                
+                // Fetch past appointments
+                let pastData = { appointments: [] };
+                try {
+                    const pastResponse = await fetch(`${API_BASE_URL}/api/appointments/patient/${user.id}/past`);
+                    if (pastResponse.ok) {
+                        pastData = await pastResponse.json();
+                    }
+                } catch (error) {
+                    console.warn('Error fetching past appointments:', error);
+                }
+                
+                // Combine all appointments
+                const allAppointments = [...(upcomingData.appointments || []), ...(pastData.appointments || [])];
                 
                 // Convert backend appointments to frontend format
-                const convertedAppointments: Appointment[] = (data.appointments || []).map((apt: any) => {
+                const convertedAppointments: Appointment[] = allAppointments.map((apt: any) => {
                     // Determine status
                     let status: 'completed' | 'cancelled' | 'upcoming' | 'scheduled' = 'upcoming';
                     if (apt.status === 'completed') {
@@ -319,6 +333,9 @@ export const Appointments: React.FC = () => {
                         pain_rating: apt.pain_rating,
                         duration: '30 minutes',
                         appointmentNotes: apt.reason || apt.symptoms || 'Appointment scheduled via AI Triage',
+                        diagnosis: apt.diagnosis,
+                        doctorNotes: apt.doctor_notes,
+                        aiSummary: apt.ai_summary || (apt.ai_summary === null ? undefined : []),
                     };
                 });
 

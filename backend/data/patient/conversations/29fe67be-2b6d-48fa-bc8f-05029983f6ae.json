@@ -1,13 +1,13 @@
 {
-  "session_id": "b8bb9a26-d79d-4eb2-9282-ac16cc9acdd5",
+  "session_id": "29fe67be-2b6d-48fa-bc8f-05029983f6ae",
   "user_id": null,
-  "created_at": "2026-01-12T00:27:24.647941",
+  "created_at": "2026-01-12T01:10:29.696466",
   "messages": [
     {
       "id": 1,
       "type": "bot",
       "content": "Hello! I'm MediVerse's AI Health Assistant. I'm here to help assess your symptoms and guide you to the right care. Let's start by understanding your health concern. What health issue or symptom are you experiencing today?",
-      "timestamp": "2026-01-12T00:27:24.647941",
+      "timestamp": "2026-01-12T01:10:29.696466",
       "metadata": {
         "question_type": "issue",
         "collected_info": {
@@ -20,19 +20,19 @@
     {
       "id": 2,
       "type": "user",
-      "content": "hii i am having stomach pain ",
-      "timestamp": "2026-01-12T00:29:11.264161",
+      "content": "Hii i am having leg pain from past 10 days ",
+      "timestamp": "2026-01-12T01:10:43.044247",
       "metadata": {}
     },
     {
       "id": 3,
       "type": "bot",
-      "content": "On a scale of 1 to 10, how would you rate your pain or discomfort? (1 being very mild and 10 being extremely severe)",
-      "timestamp": "2026-01-12T00:29:11.264161",
+      "content": "What health issue or symptom are you experiencing?",
+      "timestamp": "2026-01-12T01:10:43.054138",
       "metadata": {
-        "question_type": "pain_rating",
+        "question_type": "issue",
         "collected_info": {
-          "issue": "stomach pain",
+          "issue": null,
           "pain_rating": null,
           "duration": null
         },
@@ -42,21 +42,21 @@
     {
       "id": 4,
       "type": "user",
-      "content": "i would say 10 ",
-      "timestamp": "2026-01-12T00:29:18.832345",
+      "content": "Hii i am having leg pain from past 10 days",
+      "timestamp": "2026-01-12T01:10:55.615078",
       "metadata": {}
     },
     {
       "id": 5,
       "type": "bot",
-      "content": "How long have you been experiencing this? When did it start?",
-      "timestamp": "2026-01-12T00:29:18.832345",
+      "content": "On a scale of 1 to 10, how would you rate your pain or discomfort? (1 being very mild and 10 being extremely severe)",
+      "timestamp": "2026-01-12T01:10:55.615078",
       "metadata": {
-        "question_type": "duration",
+        "question_type": "pain_rating",
         "collected_info": {
-          "issue": "stomach pain",
-          "pain_rating": 10,
-          "duration": null
+          "issue": "leg pain",
+          "pain_rating": null,
+          "duration": "10 days"
         },
         "is_complete": false
       }
@@ -64,19 +64,19 @@
     {
       "id": 6,
       "type": "user",
-      "content": "it started around 10 days ago ",
-      "timestamp": "2026-01-12T00:29:34.946168",
+      "content": "i would say 10 ",
+      "timestamp": "2026-01-12T01:11:03.589411",
       "metadata": {}
     },
     {
       "id": 7,
       "type": "bot",
       "content": "Based on your symptoms, I recommend consulting with Dr. Priya Patel, a General Physician.\n\n**Doctor Details:**\n- Name: Dr. Priya Patel\n- Specialty: General Physician\n- Qualifications: MBBS, MD (General Medicine)\n- Experience: 12 years\n- Rating: 4.8/5.0\n\n**Available Appointment Slots:**\n- 2026-01-12 at 10:00 AM\n- 2026-01-12 at 11:00 AM\n- 2026-01-12 at 2:00 PM\n",
-      "timestamp": "2026-01-12T00:29:34.947163",
+      "timestamp": "2026-01-12T01:11:03.589411",
       "metadata": {
-        "question_type": null,
+        "question_type": "duration",
         "collected_info": {
-          "issue": "stomach pain",
+          "issue": "leg pain",
           "pain_rating": 10,
           "duration": "10 days"
         },
@@ -122,7 +122,7 @@
     }
   ],
   "collected_info": {
-    "issue": "stomach pain",
+    "issue": "leg pain",
     "pain_rating": 10,
     "duration": "10 days"
   },
