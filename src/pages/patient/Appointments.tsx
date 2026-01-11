@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { AIInsightPopover } from '@/components/shared/AIInsightPopover';
 import {
     Calendar,
@@ -13,6 +23,11 @@ import {
     CheckCircle,
     XCircle,
     FileText,
+    MapPin,
+    Phone,
+    ClipboardList,
+    Info,
+    CalendarDays,
 } from 'lucide-react';
 
 interface Appointment {
@@ -26,6 +41,12 @@ interface Appointment {
     diagnosis?: string;
     doctorNotes?: string;
     aiSummary?: string[];
+    location?: string;
+    contactNumber?: string;
+    preparation?: string[];
+    duration?: string;
+    meetingLink?: string;
+    appointmentNotes?: string;
 }
 
 const upcomingAppointments: Appointment[] = [
@@ -37,6 +58,16 @@ const upcomingAppointments: Appointment[] = [
         time: '3:00 PM',
         type: 'Video Consultation',
         status: 'upcoming',
+        duration: '30 minutes',
+        meetingLink: 'https://mediverse.health/meet/dr-priya-patel',
+        contactNumber: '+91 98765 43210',
+        preparation: [
+            'Ensure stable internet connection',
+            'Keep recent health reports handy',
+            'Be ready 5 minutes before the scheduled time',
+            'Have a list of current medications available'
+        ],
+        appointmentNotes: 'Follow-up consultation for recent thyroid test results. Doctor will discuss medication adjustments if needed.',
     },
     {
         id: 2,
@@ -46,6 +77,17 @@ const upcomingAppointments: Appointment[] = [
         time: '10:30 AM',
         type: 'In-person',
         status: 'upcoming',
+        duration: '45 minutes',
+        location: 'Apollo Hospital, Cardiac Wing, Room 302, 3rd Floor, Jubilee Hills, Hyderabad',
+        contactNumber: '+91 98765 12345',
+        preparation: [
+            'Fasting required for 8-12 hours before visit',
+            'Bring all previous cardiac reports and ECG',
+            'Wear comfortable clothing for examination',
+            'Arrive 15 minutes early for registration',
+            'Bring a list of current medications'
+        ],
+        appointmentNotes: 'Routine cardiac checkup and cholesterol level follow-up. May include ECG and blood work if needed.',
     },
 ];
 
@@ -153,7 +195,121 @@ const pastAppointments: Appointment[] = [
     },
 ];
 
+// Doctor availability slots data
+interface TimeSlot {
+    time: string;
+    available: boolean;
+}
+
+interface DaySlots {
+    date: string;
+    dayName: string;
+    slots: TimeSlot[];
+}
+
+interface DoctorAvailability {
+    [doctorName: string]: DaySlots[];
+}
+
+const doctorAvailability: DoctorAvailability = {
+    'Dr. Priya Patel': [
+        {
+            date: 'Jan 13, 2026',
+            dayName: 'Monday',
+            slots: [
+                { time: '9:00 AM', available: true },
+                { time: '10:00 AM', available: false },
+                { time: '11:00 AM', available: true },
+                { time: '2:00 PM', available: true },
+                { time: '3:00 PM', available: false },
+                { time: '4:00 PM', available: true },
+            ]
+        },
+        {
+            date: 'Jan 14, 2026',
+            dayName: 'Tuesday',
+            slots: [
+                { time: '9:00 AM', available: true },
+                { time: '10:00 AM', available: true },
+                { time: '11:00 AM', available: false },
+                { time: '2:00 PM', available: true },
+                { time: '3:00 PM', available: true },
+                { time: '4:00 PM', available: false },
+            ]
+        },
+        {
+            date: 'Jan 15, 2026',
+            dayName: 'Wednesday',
+            slots: [
+                { time: '9:00 AM', available: false },
+                { time: '10:00 AM', available: true },
+                { time: '11:00 AM', available: true },
+                { time: '2:00 PM', available: false },
+                { time: '3:00 PM', available: true },
+                { time: '4:00 PM', available: true },
+            ]
+        },
+    ],
+    'Dr. Arjun Singh': [
+        {
+            date: 'Jan 16, 2026',
+            dayName: 'Thursday',
+            slots: [
+                { time: '9:30 AM', available: true },
+                { time: '10:30 AM', available: true },
+                { time: '11:30 AM', available: false },
+                { time: '2:30 PM', available: true },
+                { time: '3:30 PM', available: false },
+            ]
+        },
+        {
+            date: 'Jan 17, 2026',
+            dayName: 'Friday',
+            slots: [
+                { time: '9:30 AM', available: false },
+                { time: '10:30 AM', available: true },
+                { time: '11:30 AM', available: true },
+                { time: '2:30 PM', available: true },
+                { time: '3:30 PM', available: true },
+            ]
+        },
+        {
+            date: 'Jan 20, 2026',
+            dayName: 'Monday',
+            slots: [
+                { time: '9:30 AM', available: true },
+                { time: '10:30 AM', available: false },
+                { time: '11:30 AM', available: true },
+                { time: '2:30 PM', available: false },
+                { time: '3:30 PM', available: true },
+            ]
+        },
+    ],
+};
+
 export const Appointments: React.FC = () => {
+    const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
+
+    const handleRescheduleClick = (appointment: Appointment) => {
+        setSelectedAppointment(appointment);
+        setSelectedSlot(null);
+        setRescheduleDialogOpen(true);
+    };
+
+    const handleSlotSelect = (date: string, time: string) => {
+        setSelectedSlot({ date, time });
+    };
+
+    const handleConfirmReschedule = () => {
+        // In a real app, this would call an API to reschedule
+        alert(`Appointment rescheduled to ${selectedSlot?.date} at ${selectedSlot?.time}`);
+        setRescheduleDialogOpen(false);
+        setSelectedAppointment(null);
+        setSelectedSlot(null);
+    };
+
     const getStatusIcon = (status: Appointment['status']) => {
         switch (status) {
             case 'completed':
@@ -229,9 +385,117 @@ export const Appointments: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         {getStatusBadge(apt.status)}
-                                        <Button variant="outline" size="sm">
-                                            View Details
-                                        </Button>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" size="sm">
+                                                    <Info className="w-4 h-4 mr-1" />
+                                                    View Details
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-80" align="end">
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center gap-2 pb-2 border-b border-border">
+                                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                                            <User className="w-5 h-5 text-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-semibold text-sm">{apt.doctor}</h4>
+                                                            <p className="text-xs text-muted-foreground">{apt.specialty}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-3 text-sm">
+                                                        <div className="flex items-start gap-2">
+                                                            <Calendar className="w-4 h-4 text-primary mt-0.5" />
+                                                            <div>
+                                                                <p className="font-medium">Date & Time</p>
+                                                                <p className="text-muted-foreground text-xs">{apt.date} at {apt.time}</p>
+                                                                {apt.duration && <p className="text-muted-foreground text-xs">Duration: {apt.duration}</p>}
+                                                            </div>
+                                                        </div>
+
+                                                        {apt.type === 'Video Consultation' ? (
+                                                            <div className="flex items-start gap-2">
+                                                                <Video className="w-4 h-4 text-primary mt-0.5" />
+                                                                <div>
+                                                                    <p className="font-medium">Video Consultation</p>
+                                                                    <p className="text-muted-foreground text-xs">Join link will be shared 10 mins before</p>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-start gap-2">
+                                                                <MapPin className="w-4 h-4 text-primary mt-0.5" />
+                                                                <div>
+                                                                    <p className="font-medium">Location</p>
+                                                                    <p className="text-muted-foreground text-xs">{apt.location}</p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {apt.contactNumber && (
+                                                            <div className="flex items-start gap-2">
+                                                                <Phone className="w-4 h-4 text-primary mt-0.5" />
+                                                                <div>
+                                                                    <p className="font-medium">Contact</p>
+                                                                    <p className="text-muted-foreground text-xs">{apt.contactNumber}</p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {apt.appointmentNotes && (
+                                                            <div className="flex items-start gap-2">
+                                                                <FileText className="w-4 h-4 text-primary mt-0.5" />
+                                                                <div>
+                                                                    <p className="font-medium">Appointment Notes</p>
+                                                                    <p className="text-muted-foreground text-xs">{apt.appointmentNotes}</p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {apt.preparation && apt.preparation.length > 0 && (
+                                                            <div className="flex items-start gap-2">
+                                                                <ClipboardList className="w-4 h-4 text-primary mt-0.5" />
+                                                                <div>
+                                                                    <p className="font-medium">How to Prepare</p>
+                                                                    <ul className="text-muted-foreground text-xs space-y-1 mt-1">
+                                                                        {apt.preparation.map((item, idx) => (
+                                                                            <li key={idx} className="flex gap-1">
+                                                                                <span className="text-primary">•</span>
+                                                                                <span>{item}</span>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex gap-2 pt-2 border-t border-border">
+                                                        {apt.type === 'Video Consultation' ? (
+                                                            <Button size="sm" className="flex-1" asChild>
+                                                                <Link to="/patient/telehealth">
+                                                                    <Video className="w-4 h-4 mr-1" />
+                                                                    Join Call
+                                                                </Link>
+                                                            </Button>
+                                                        ) : (
+                                                            <Button size="sm" className="flex-1">
+                                                                <MapPin className="w-4 h-4 mr-1" />
+                                                                Get Directions
+                                                            </Button>
+                                                        )}
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleRescheduleClick(apt)}
+                                                        >
+                                                            <CalendarDays className="w-4 h-4 mr-1" />
+                                                            Reschedule
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 </div>
                             ))
@@ -317,6 +581,90 @@ export const Appointments: React.FC = () => {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Reschedule Dialog */}
+            <Dialog open={rescheduleDialogOpen} onOpenChange={setRescheduleDialogOpen}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <CalendarDays className="w-5 h-5 text-primary" />
+                            Reschedule Appointment
+                        </DialogTitle>
+                        <DialogDescription>
+                            Select a new date and time for your appointment with {selectedAppointment?.doctor}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedAppointment && doctorAvailability[selectedAppointment.doctor] && (
+                        <div className="space-y-4 py-4">
+                            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <User className="w-5 h-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-sm">{selectedAppointment.doctor}</p>
+                                    <p className="text-xs text-muted-foreground">{selectedAppointment.specialty}</p>
+                                </div>
+                                <Badge variant="outline" className="ml-auto">
+                                    {selectedAppointment.type}
+                                </Badge>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h4 className="font-medium text-sm text-muted-foreground">Available Slots</h4>
+                                {doctorAvailability[selectedAppointment.doctor].map((day, dayIdx) => (
+                                    <div key={dayIdx} className="border border-border rounded-lg p-4">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Calendar className="w-4 h-4 text-primary" />
+                                            <span className="font-medium text-sm">{day.dayName}, {day.date}</span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {day.slots.map((slot, slotIdx) => (
+                                                <Button
+                                                    key={slotIdx}
+                                                    variant={selectedSlot?.date === day.date && selectedSlot?.time === slot.time ? "default" : "outline"}
+                                                    size="sm"
+                                                    disabled={!slot.available}
+                                                    onClick={() => handleSlotSelect(day.date, slot.time)}
+                                                    className={`${!slot.available
+                                                            ? 'opacity-50 cursor-not-allowed line-through'
+                                                            : selectedSlot?.date === day.date && selectedSlot?.time === slot.time
+                                                                ? 'bg-primary text-primary-foreground'
+                                                                : 'hover:bg-primary/10 hover:border-primary'
+                                                        }`}
+                                                >
+                                                    <Clock className="w-3 h-3 mr-1" />
+                                                    {slot.time}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {selectedSlot && (
+                                <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                                    <p className="text-sm font-medium text-primary">
+                                        ✓ Selected: {selectedSlot.date} at {selectedSlot.time}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setRescheduleDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            disabled={!selectedSlot}
+                            onClick={handleConfirmReschedule}
+                        >
+                            Confirm Reschedule
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </DashboardLayout>
     );
 };

@@ -137,7 +137,7 @@ export const PatientDashboard: React.FC = () => {
                         <Sparkles className="w-4 h-4 text-violet-600" />
                         How Your Score is Calculated
                       </h4>
-                      
+
                       {/* Before/After Comparison */}
                       <div className="space-y-3">
                         <p className="text-xs font-medium text-foreground">Score Change Justification:</p>
@@ -232,7 +232,7 @@ export const PatientDashboard: React.FC = () => {
                         <div className="bg-violet-50 dark:bg-violet-950/20 rounded-lg p-2.5 border border-violet-200 dark:border-violet-800">
                           <p className="text-xs font-semibold text-foreground mb-1">Overall Score Change: 82 → 85 (+3 points)</p>
                           <p className="text-xs text-muted-foreground">
-                            Your score improved due to better glucose control, improved hemoglobin levels, and resolved infection. 
+                            Your score improved due to better glucose control, improved hemoglobin levels, and resolved infection.
                             However, thyroid function needs attention. Continue monitoring cholesterol.
                           </p>
                         </div>
@@ -409,6 +409,41 @@ export const PatientDashboard: React.FC = () => {
             <div className="flex items-center gap-2 mb-3">
               <Lightbulb className="w-4 h-4 text-violet-600" />
               <h3 className="font-semibold text-sm">Personalized Recommendations</h3>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="p-1 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded-full transition-colors">
+                    <Info className="w-3.5 h-3.5 text-violet-600" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72" align="start">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-violet-600" />
+                      About These Recommendations
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      These personalized recommendations are generated from your <span className="font-semibold text-foreground">latest health report</span> analysis, including:
+                    </p>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li className="flex gap-2">
+                        <span className="text-violet-600">•</span>
+                        <span>Blood Test Results (Jan 8, 2026)</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-violet-600">•</span>
+                        <span>Lipid Profile (Dec 15, 2025)</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-violet-600">•</span>
+                        <span>Thyroid Function Test (Nov 20, 2025)</span>
+                      </li>
+                    </ul>
+                    <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+                      AI analyzes your complete medical history to provide tailored health guidance.
+                    </p>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <ul className="space-y-2 text-sm">
               <li className="flex gap-2">

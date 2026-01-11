@@ -19,19 +19,6 @@ import {
   MicOff,
 } from 'lucide-react';
 
-interface TriageSession {
-  id: number;
-  date: string;
-  symptom: string;
-  status: 'high' | 'medium' | 'low';
-}
-
-const previousSessions: TriageSession[] = [
-  { id: 1, date: 'Today, 10:30 AM', symptom: 'Severe Migraine', status: 'medium' },
-  { id: 2, date: 'Jan 8, 2026', symptom: 'Mild Fever', status: 'low' },
-  { id: 3, date: 'Dec 25, 2025', symptom: 'Chest Pain', status: 'high' },
-];
-
 interface Message {
   id: number;
   type: 'user' | 'bot';
@@ -40,6 +27,101 @@ interface Message {
   triageLevel?: 'high' | 'medium' | 'low';
   suggestions?: string[];
 }
+
+interface TriageSession {
+  id: number;
+  date: string;
+  symptom: string;
+  status: 'high' | 'medium' | 'low';
+  messages: Message[];
+}
+
+const previousSessions: TriageSession[] = [
+  {
+    id: 1,
+    date: 'Today, 10:30 AM',
+    symptom: 'Severe Migraine',
+    status: 'medium',
+    messages: [
+      {
+        id: 1,
+        type: 'bot',
+        content: "Hello! I'm MediVerse's AI Health Assistant. I'm here to help assess your symptoms and guide you to the right care. Please describe what you're experiencing today.",
+        timestamp: new Date('2026-01-11T10:30:00'),
+      },
+      {
+        id: 2,
+        type: 'user',
+        content: "I've been having a severe migraine for the past 3 hours. The pain is throbbing and mostly on the right side of my head. I also feel nauseous and sensitive to light.",
+        timestamp: new Date('2026-01-11T10:31:00'),
+      },
+      {
+        id: 3,
+        type: 'bot',
+        content: "I understand you're experiencing flu-like symptoms. This is classified as MEDIUM PRIORITY. While not immediately urgent, I recommend consulting with a doctor within 24-48 hours.\n\nRecommended Specialist: Neurologist",
+        timestamp: new Date('2026-01-11T10:31:30'),
+        triageLevel: 'medium',
+        suggestions: ['Book Telehealth', 'Schedule Appointment', 'View Home Remedies'],
+      },
+    ]
+  },
+  {
+    id: 2,
+    date: 'Jan 8, 2026',
+    symptom: 'Mild Fever',
+    status: 'low',
+    messages: [
+      {
+        id: 1,
+        type: 'bot',
+        content: "Hello! I'm MediVerse's AI Health Assistant. I'm here to help assess your symptoms and guide you to the right care. Please describe what you're experiencing today.",
+        timestamp: new Date('2026-01-08T14:00:00'),
+      },
+      {
+        id: 2,
+        type: 'user',
+        content: "I have a mild fever of about 99.5°F. I also feel a bit tired but no other symptoms.",
+        timestamp: new Date('2026-01-08T14:01:00'),
+      },
+      {
+        id: 3,
+        type: 'bot',
+        content: "Thank you for sharing. Based on your description, this appears to be LOW PRIORITY. However, if symptoms persist or worsen, please consult a healthcare professional.\n\nRecommended: General check-up when convenient",
+        timestamp: new Date('2026-01-08T14:01:30'),
+        triageLevel: 'low',
+        suggestions: ['Book Routine Checkup', 'View Self-Care Tips', 'Set Reminder'],
+      },
+    ]
+  },
+  {
+    id: 3,
+    date: 'Dec 25, 2025',
+    symptom: 'Chest Pain',
+    status: 'high',
+    messages: [
+      {
+        id: 1,
+        type: 'bot',
+        content: "Hello! I'm MediVerse's AI Health Assistant. I'm here to help assess your symptoms and guide you to the right care. Please describe what you're experiencing today.",
+        timestamp: new Date('2025-12-25T09:00:00'),
+      },
+      {
+        id: 2,
+        type: 'user',
+        content: "I'm experiencing chest pain that started about 20 minutes ago. It feels tight and is radiating to my left arm. I'm also sweating and feel short of breath.",
+        timestamp: new Date('2025-12-25T09:01:00'),
+      },
+      {
+        id: 3,
+        type: 'bot',
+        content: "⚠️ Based on your symptoms, I'm detecting potential cardiac or respiratory concerns. This is classified as HIGH PRIORITY. I strongly recommend immediate medical attention.\n\nRecommended Specialist: Cardiologist or Emergency Care",
+        timestamp: new Date('2025-12-25T09:01:30'),
+        triageLevel: 'high',
+        suggestions: ['Call Emergency (108)', 'Book Urgent Appointment', 'Find Nearest ER'],
+      },
+    ]
+  },
+];
 
 const initialMessages: Message[] = [
   {
@@ -56,8 +138,21 @@ export const AITriage: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  const handleSessionClick = (session: TriageSession) => {
+    setSelectedSession(session.id);
+    setMessages(session.messages);
+    setInput('');
+  };
+
+  const handleNewAssessment = () => {
+    setSelectedSession(null);
+    setMessages(initialMessages);
+    setInput('');
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -71,7 +166,7 @@ export const AITriage: React.FC = () => {
   useEffect(() => {
     // Check if browser supports Speech Recognition
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    
+
     if (SpeechRecognition) {
       setIsSpeechSupported(true);
       const recognition = new SpeechRecognition();
@@ -223,7 +318,7 @@ export const AITriage: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-10rem)]">
         {/* History Sidebar */}
         <div className="w-full lg:w-80 flex-shrink-0 space-y-4">
-          <Button className="w-full" size="lg">
+          <Button className="w-full" size="lg" onClick={handleNewAssessment}>
             <Plus className="w-4 h-4 mr-2" />
             New Assessment
           </Button>
@@ -234,7 +329,11 @@ export const AITriage: React.FC = () => {
               {previousSessions.map((session) => (
                 <div
                   key={session.id}
-                  className="p-3 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors cursor-pointer group"
+                  onClick={() => handleSessionClick(session)}
+                  className={`p-3 rounded-xl border transition-colors cursor-pointer group ${selectedSession === session.id
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-1">
                     <span className="font-medium text-foreground text-sm truncate">{session.symptom}</span>
@@ -274,8 +373,8 @@ export const AITriage: React.FC = () => {
               >
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground'
                     }`}
                 >
                   {message.type === 'user' ? (
@@ -290,8 +389,8 @@ export const AITriage: React.FC = () => {
                 >
                   <div
                     className={`inline-block p-4 rounded-2xl ${message.type === 'user'
-                        ? 'bg-primary text-primary-foreground rounded-br-md'
-                        : 'bg-card border border-border rounded-bl-md shadow-sm'
+                      ? 'bg-primary text-primary-foreground rounded-br-md'
+                      : 'bg-card border border-border rounded-bl-md shadow-sm'
                       }`}
                   >
                     {message.triageLevel && (
