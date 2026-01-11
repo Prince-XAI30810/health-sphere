@@ -1,0 +1,106 @@
+{
+  "doctors": [
+    {
+      "id": "doc1",
+      "name": "Dr. Priya Patel",
+      "specialty": "General Physician",
+      "qualifications": "MBBS, MD (General Medicine)",
+      "experience": "12 years",
+      "rating": 4.8,
+      "available_slots": [
+        {
+          "date": "2026-01-12",
+          "time": "10:00 AM",
+          "available": true
+        },
+        {
+          "date": "2026-01-12",
+          "time": "11:00 AM",
+          "available": true
+        },
+        {
+          "date": "2026-01-12",
+          "time": "2:00 PM",
+          "available": true
+        },
+        {
+          "date": "2026-01-13",
+          "time": "9:00 AM",
+          "available": true
+        },
+        {
+          "date": "2026-01-13",
+          "time": "10:30 AM",
+          "available": true
+        }
+      ],
+      "phone": "+91 98765 43210",
+      "email": "dr.priya@mediverse.com"
+    },
+    {
+      "id": "doc2",
+      "name": "Dr. Rajesh Kumar",
+      "specialty": "Cardiologist",
+      "qualifications": "MBBS, MD (Cardiology), DM (Cardiology)",
+      "experience": "15 years",
+      "rating": 4.9,
+      "available_slots": [
+        {
+          "date": "2026-01-12",
+          "time": "11:00 AM",
+          "available": true
+        },
+        {
+          "date": "2026-01-12",
+          "time": "3:00 PM",
+          "available": true
+        },
+        {
+          "date": "2026-01-13",
+          "time": "10:00 AM",
+          "available": true
+        },
+        {
+          "date": "2026-01-13",
+          "time": "4:00 PM",
+          "available": true
+        }
+      ],
+      "phone": "+91 98765 43211",
+      "email": "dr.rajesh@mediverse.com"
+    },
+    {
+      "id": "doc3",
+      "name": "Dr. Anjali Sharma",
+      "specialty": "Neurologist",
+      "qualifications": "MBBS, MD (Neurology), DM (Neurology)",
+      "experience": "10 years",
+      "rating": 4.7,
+      "available_slots": [
+        {
+          "date": "2026-01-12",
+          "time": "9:00 AM",
+          "available": true
+        },
+        {
+          "date": "2026-01-12",
+          "time": "1:00 PM",
+          "available": true
+        },
+        {
+          "date": "2026-01-13",
+          "time": "11:00 AM",
+          "available": true
+        },
+        {
+          "date": "2026-01-13",
+          "time": "2:00 PM",
+          "available": true
+        }
+      ],
+      "phone": "+91 98765 43212",
+      "email": "dr.anjali@mediverse.com"
+    }
+  ]
+}
+

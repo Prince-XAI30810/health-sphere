@@ -1,0 +1,29 @@
+{
+  "users": [
+    {
+      "email": "patient@mediverse.com",
+      "password": "patient123",
+      "role": "patient",
+      "id": "p1",
+      "name": "Rahul Sharma",
+      "avatar": "RS"
+    },
+    {
+      "email": "doctor@mediverse.com",
+      "password": "doctor123",
+      "role": "doctor",
+      "id": "d1",
+      "name": "Dr. Priya Patel",
+      "avatar": "PP"
+    },
+    {
+      "email": "admin@mediverse.com",
+      "password": "admin123",
+      "role": "admin",
+      "id": "a1",
+      "name": "Amit Kumar",
+      "avatar": "AK"
+    }
+  ]
+}
+

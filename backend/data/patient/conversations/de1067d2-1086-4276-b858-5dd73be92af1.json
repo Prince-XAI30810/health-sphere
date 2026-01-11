@@ -1,0 +1,27 @@
+{
+  "session_id": "de1067d2-1086-4276-b858-5dd73be92af1",
+  "user_id": null,
+  "created_at": "2026-01-12T00:31:18.913591",
+  "messages": [
+    {
+      "id": 1,
+      "type": "bot",
+      "content": "Hello! I'm MediVerse's AI Health Assistant. I'm here to help assess your symptoms and guide you to the right care. Let's start by understanding your health concern. What health issue or symptom are you experiencing today?",
+      "timestamp": "2026-01-12T00:31:18.913591",
+      "metadata": {
+        "question_type": "issue",
+        "collected_info": {
+          "issue": null,
+          "severity": null,
+          "duration": null
+        }
+      }
+    }
+  ],
+  "collected_info": {
+    "issue": null,
+    "pain_rating": null,
+    "duration": null
+  },
+  "status": "active"
+}

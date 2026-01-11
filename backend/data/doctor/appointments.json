@@ -1,0 +1,20 @@
+{
+  "appointments": [
+    {
+      "appointment_id": "7cba7094-4114-4fe8-a948-5bf03f33b16c",
+      "patient_id": "p1",
+      "patient_name": "Rahul Sharma",
+      "patient_email": "patient@mediverse.com",
+      "doctor_id": "doc1",
+      "doctor_name": "Dr. Priya Patel",
+      "appointment_date": "2026-01-12",
+      "appointment_time": "10:00 AM",
+      "status": "scheduled",
+      "reason": "Based on your symptoms, I recommend consulting with Dr. Priya Patel, a General Physician.\n\n**Doctor Details:**\n- Name: Dr. Priya Patel\n- Specialty: General Physician\n- Qualifications: MBBS, MD (General Medicine)\n- Experience: 12 years\n- Rating: 4.8/5.0\n\n**Available Appointment Slots:**\n- 2026-01-12 at 10:00 AM\n- 2026-01-12 at 11:00 AM\n- 2026-01-12 at 2:00 PM\n",
+      "created_at": "2026-01-12T00:42:24.886862",
+      "triage_session_id": "b8bb9a26-d79d-4eb2-9282-ac16cc9acdd5",
+      "symptoms": "hii i am having stomach pain ",
+      "pain_rating": null
+    }
+  ]
+}

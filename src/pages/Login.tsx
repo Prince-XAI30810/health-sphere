@@ -5,6 +5,7 @@ import { UserRole } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -48,9 +49,15 @@ export const Login: React.FC = () => {
     setIsLoading(true);
     try {
       await login(email, password, role);
+      toast.success('Login successful!', {
+        description: `Welcome to the ${role} portal`,
+      });
       navigate(`/${role}`);
     } catch (error) {
-      console.error('Login failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
+      toast.error('Login failed', {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }

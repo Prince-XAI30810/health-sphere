@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { AIInsightPopover } from '@/components/shared/AIInsightPopover';
+import { useAuth } from '@/contexts/AuthContext';
 import {
     Calendar,
     Clock,
@@ -31,13 +32,17 @@ import {
 } from 'lucide-react';
 
 interface Appointment {
-    id: number;
+    id?: number;
+    appointment_id?: string;
     doctor: string;
+    doctor_name?: string;
     specialty: string;
     date: string;
+    appointment_date?: string;
     time: string;
-    type: 'Video Consultation' | 'In-person';
-    status: 'completed' | 'cancelled' | 'upcoming';
+    appointment_time?: string;
+    type?: 'Video Consultation' | 'In-person';
+    status: 'completed' | 'cancelled' | 'upcoming' | 'scheduled';
     diagnosis?: string;
     doctorNotes?: string;
     aiSummary?: string[];
@@ -47,49 +52,14 @@ interface Appointment {
     duration?: string;
     meetingLink?: string;
     appointmentNotes?: string;
+    reason?: string;
+    symptoms?: string;
+    pain_rating?: string;
 }
 
-const upcomingAppointments: Appointment[] = [
-    {
-        id: 1,
-        doctor: 'Dr. Priya Patel',
-        specialty: 'General Physician',
-        date: 'Jan 12, 2026',
-        time: '3:00 PM',
-        type: 'Video Consultation',
-        status: 'upcoming',
-        duration: '30 minutes',
-        meetingLink: 'https://mediverse.health/meet/dr-priya-patel',
-        contactNumber: '+91 98765 43210',
-        preparation: [
-            'Ensure stable internet connection',
-            'Keep recent health reports handy',
-            'Be ready 5 minutes before the scheduled time',
-            'Have a list of current medications available'
-        ],
-        appointmentNotes: 'Follow-up consultation for recent thyroid test results. Doctor will discuss medication adjustments if needed.',
-    },
-    {
-        id: 2,
-        doctor: 'Dr. Arjun Singh',
-        specialty: 'Cardiologist',
-        date: 'Jan 15, 2026',
-        time: '10:30 AM',
-        type: 'In-person',
-        status: 'upcoming',
-        duration: '45 minutes',
-        location: 'Apollo Hospital, Cardiac Wing, Room 302, 3rd Floor, Jubilee Hills, Hyderabad',
-        contactNumber: '+91 98765 12345',
-        preparation: [
-            'Fasting required for 8-12 hours before visit',
-            'Bring all previous cardiac reports and ECG',
-            'Wear comfortable clothing for examination',
-            'Arrive 15 minutes early for registration',
-            'Bring a list of current medications'
-        ],
-        appointmentNotes: 'Routine cardiac checkup and cholesterol level follow-up. May include ECG and blood work if needed.',
-    },
-];
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+
+// Mock data for past appointments (can be fetched from backend later)
 
 const pastAppointments: Appointment[] = [
     {
@@ -288,9 +258,88 @@ const doctorAvailability: DoctorAvailability = {
 };
 
 export const Appointments: React.FC = () => {
+    const { user } = useAuth();
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
+
+    // Fetch appointments from backend
+    useEffect(() => {
+        const fetchAppointments = async () => {
+            if (!user || user.role !== 'patient') {
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                setIsLoading(true);
+                const response = await fetch(`${API_BASE_URL}/api/appointments/patient/${user.id}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch appointments');
+                }
+
+                const data = await response.json();
+                
+                // Convert backend appointments to frontend format
+                const convertedAppointments: Appointment[] = (data.appointments || []).map((apt: any) => {
+                    // Determine status
+                    let status: 'completed' | 'cancelled' | 'upcoming' | 'scheduled' = 'upcoming';
+                    if (apt.status === 'completed') {
+                        status = 'completed';
+                    } else if (apt.status === 'cancelled') {
+                        status = 'cancelled';
+                    } else {
+                        // Check if appointment date is in the past
+                        const appointmentDate = new Date(`${apt.appointment_date}T${apt.appointment_time}`);
+                        const now = new Date();
+                        if (appointmentDate < now) {
+                            status = 'completed';
+                        } else {
+                            status = 'upcoming';
+                        }
+                    }
+
+                    return {
+                        id: parseInt(apt.appointment_id?.replace(/-/g, '').substring(0, 8) || '0', 16) || 0,
+                        appointment_id: apt.appointment_id,
+                        doctor: apt.doctor_name || 'Unknown Doctor',
+                        doctor_name: apt.doctor_name,
+                        specialty: apt.specialty || 'General',
+                        date: apt.appointment_date || '',
+                        appointment_date: apt.appointment_date,
+                        time: apt.appointment_time || '',
+                        appointment_time: apt.appointment_time,
+                        type: 'Video Consultation' as const,
+                        status: status,
+                        reason: apt.reason,
+                        symptoms: apt.symptoms,
+                        pain_rating: apt.pain_rating,
+                        duration: '30 minutes',
+                        appointmentNotes: apt.reason || apt.symptoms || 'Appointment scheduled via AI Triage',
+                    };
+                });
+
+                // Sort by date (upcoming first, then past)
+                convertedAppointments.sort((a, b) => {
+                    const dateA = new Date(`${a.appointment_date || a.date}T${a.appointment_time || a.time}`);
+                    const dateB = new Date(`${b.appointment_date || b.date}T${b.appointment_time || b.time}`);
+                    return dateB.getTime() - dateA.getTime();
+                });
+
+                setAppointments(convertedAppointments);
+            } catch (error) {
+                console.error('Error fetching appointments:', error);
+                setAppointments([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchAppointments();
+    }, [user]);
 
     const handleRescheduleClick = (appointment: Appointment) => {
         setSelectedAppointment(appointment);
@@ -345,9 +394,14 @@ export const Appointments: React.FC = () => {
 
                 {/* Upcoming Appointments */}
                 <TabsContent value="upcoming" className="space-y-4">
-                    <div className="card-elevated divide-y divide-border">
-                        {upcomingAppointments.length > 0 ? (
-                            upcomingAppointments.map((apt) => (
+                    {isLoading ? (
+                        <div className="card-elevated p-6 text-center">
+                            <p className="text-muted-foreground">Loading appointments...</p>
+                        </div>
+                    ) : (
+                        <div className="card-elevated divide-y divide-border">
+                            {appointments.filter(apt => apt.status === 'upcoming' || apt.status === 'scheduled').length > 0 ? (
+                                appointments.filter(apt => apt.status === 'upcoming' || apt.status === 'scheduled').map((apt) => (
                                 <div
                                     key={apt.id}
                                     className="p-6 flex items-center justify-between hover:bg-muted/30 transition-colors"
@@ -366,11 +420,11 @@ export const Appointments: React.FC = () => {
                                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                                 <div className="flex items-center gap-1">
                                                     <Calendar className="w-4 h-4" />
-                                                    <span>{apt.date}</span>
+                                                    <span>{apt.appointment_date || apt.date}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     <Clock className="w-4 h-4" />
-                                                    <span>{apt.time}</span>
+                                                    <span>{apt.appointment_time || apt.time}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     {apt.type === 'Video Consultation' ? (
@@ -409,7 +463,7 @@ export const Appointments: React.FC = () => {
                                                             <Calendar className="w-4 h-4 text-primary mt-0.5" />
                                                             <div>
                                                                 <p className="font-medium">Date & Time</p>
-                                                                <p className="text-muted-foreground text-xs">{apt.date} at {apt.time}</p>
+                                                                <p className="text-muted-foreground text-xs">{apt.appointment_date || apt.date} at {apt.appointment_time || apt.time}</p>
                                                                 {apt.duration && <p className="text-muted-foreground text-xs">Duration: {apt.duration}</p>}
                                                             </div>
                                                         </div>
@@ -498,20 +552,27 @@ export const Appointments: React.FC = () => {
                                         </Popover>
                                     </div>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="p-8 text-center text-muted-foreground">
-                                <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                <p>No upcoming appointments</p>
-                            </div>
-                        )}
-                    </div>
+                                ))
+                            ) : (
+                                <div className="p-8 text-center text-muted-foreground">
+                                    <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                    <p>No upcoming appointments</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </TabsContent>
 
                 {/* Past Appointments */}
                 <TabsContent value="past" className="space-y-4">
-                    <div className="card-elevated divide-y divide-border">
-                        {pastAppointments.map((apt) => (
+                    {isLoading ? (
+                        <div className="card-elevated p-6 text-center">
+                            <p className="text-muted-foreground">Loading appointments...</p>
+                        </div>
+                    ) : (
+                        <div className="card-elevated divide-y divide-border">
+                            {appointments.filter(apt => apt.status === 'completed' || apt.status === 'cancelled').length > 0 ? (
+                                appointments.filter(apt => apt.status === 'completed' || apt.status === 'cancelled').map((apt) => (
                             <div
                                 key={apt.id}
                                 className="p-6 hover:bg-muted/30 transition-colors"
@@ -532,11 +593,11 @@ export const Appointments: React.FC = () => {
                                             <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                                                 <div className="flex items-center gap-1">
                                                     <Calendar className="w-4 h-4" />
-                                                    <span>{apt.date}</span>
+                                                    <span>{apt.appointment_date || apt.date}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     <Clock className="w-4 h-4" />
-                                                    <span>{apt.time}</span>
+                                                    <span>{apt.appointment_time || apt.time}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     {apt.type === 'Video Consultation' ? (
@@ -577,8 +638,15 @@ export const Appointments: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+                                ))
+                            ) : (
+                                <div className="p-8 text-center text-muted-foreground">
+                                    <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                    <p>No past appointments</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </TabsContent>
             </Tabs>
 

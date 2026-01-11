@@ -3,37 +3,44 @@ import { User, UserRole, AuthContextType } from '@/types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const mockUsers: Record<UserRole, User> = {
-  patient: {
-    id: 'p1',
-    name: 'Rahul Sharma',
-    email: 'rahul.sharma@email.com',
-    role: 'patient',
-    avatar: 'RS',
-  },
-  doctor: {
-    id: 'd1',
-    name: 'Dr. Priya Patel',
-    email: 'dr.priya@mediverse.com',
-    role: 'doctor',
-    avatar: 'PP',
-  },
-  admin: {
-    id: 'a1',
-    name: 'Amit Kumar',
-    email: 'amit.admin@mediverse.com',
-    role: 'admin',
-    avatar: 'AK',
-  },
-};
+// API base URL - adjust if your backend runs on a different port
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
   const login = useCallback(async (email: string, password: string, role: UserRole) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setUser(mockUsers[role]);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          role,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Login failed' }));
+        throw new Error(errorData.detail || 'Invalid credentials');
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.user) {
+        setUser(data.user);
+      } else {
+        throw new Error(data.message || 'Login failed');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error. Please check if the backend server is running.');
+    }
   }, []);
 
   const logout = useCallback(() => {

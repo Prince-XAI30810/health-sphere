@@ -93,6 +93,8 @@ interface QueuePatient {
   };
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+
 const patientQueue: QueuePatient[] = [
   {
     id: 'P001',
@@ -427,6 +429,9 @@ export const DoctorDashboard: React.FC = () => {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [patientSummaries, setPatientSummaries] = useState<Record<string, any>>({});
+  const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
 
   const getTriageBadge = (level: QueuePatient['triageLevel']) => {
     switch (level) {
@@ -450,9 +455,93 @@ export const DoctorDashboard: React.FC = () => {
     }
   };
 
-  const handlePatientClick = (patient: QueuePatient) => {
+  // Load appointments from backend
+  useEffect(() => {
+    const loadAppointments = async () => {
+      if (!user || user.role !== 'doctor') return;
+      
+      setIsLoadingAppointments(true);
+      try {
+        // Get doctor ID from user (assuming it's stored in user object or use email)
+        const doctorId = user.id || 'd1'; // Fallback to default doctor ID
+        
+        // Fetch from patient queue instead
+        const queueResponse = await fetch(`${API_BASE_URL}/api/appointments/queue/doctor/${doctorId}`);
+        if (!queueResponse.ok) {
+          throw new Error('Failed to load patient queue');
+        }
+        
+        const queueData = await queueResponse.json();
+        const queuePatients = queueData.patients || [];
+        
+        // Convert queue patients to appointment format for compatibility
+        const convertedAppointments = queuePatients.map((patient: any) => ({
+          appointment_id: patient.appointment_id,
+          patient_id: patient.patient_id,
+          patient_name: patient.patient_name,
+          doctor_id: patient.doctor_id,
+          appointment_date: patient.appointment_date,
+          appointment_time: patient.appointment_time,
+          status: patient.status || 'scheduled',
+          reason: patient.symptoms || 'Triage appointment',
+          triage_session_id: null,
+          symptoms: patient.symptoms,
+          pain_rating: patient.pain_rating,
+          // Store queue data for display
+          queue_data: patient
+        }));
+        
+        setAppointments(convertedAppointments);
+        
+        // Store patient summaries from queue
+        const summaries: Record<string, any> = {};
+        queuePatients.forEach((patient: any) => {
+          summaries[patient.appointment_id] = {
+            summary: patient.summary,
+            triage_level: patient.triage_score,
+            recommended_actions: patient.key_points || []
+          };
+        });
+        
+        setPatientSummaries(summaries);
+      } catch (error) {
+        console.error('Error loading appointments:', error);
+      } finally {
+        setIsLoadingAppointments(false);
+      }
+    };
+    
+    loadAppointments();
+  }, [user]);
+
+  const handlePatientClick = async (patient: QueuePatient) => {
     setSelectedPatient(patient);
     setIsSidebarOpen(true);
+    
+    // Load patient summary if not already loaded
+    if (patient.id && !patientSummaries[patient.id]) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/patient-summary/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            patient_id: patient.id,
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setPatientSummaries(prev => ({
+            ...prev,
+            [patient.id]: data,
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading patient summary:', error);
+      }
+    }
   };
 
   const handleAcceptAppointment = () => {
@@ -721,7 +810,85 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
       {/* Patient Queue - Card Based */}
       <div className="card-elevated">
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {patientQueue.map((patient) => (
+          {isLoadingAppointments ? (
+            <div className="col-span-full flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : appointments.length === 0 ? (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              No appointments scheduled. Patients will appear here when they schedule appointments.
+            </div>
+          ) : (
+            appointments
+              .filter(apt => apt.status === 'scheduled')
+              .map((appointment) => {
+                const summary = patientSummaries[appointment.patient_id];
+                const triageLevel = appointment.pain_rating 
+                  ? (parseInt(appointment.pain_rating) <= 3 ? 'low' : parseInt(appointment.pain_rating) <= 6 ? 'medium' : 'high')
+                  : 'medium';
+                
+                return (
+                  <div
+                    key={appointment.appointment_id}
+                    onClick={() => handlePatientClick({
+                      id: appointment.patient_id,
+                      name: appointment.patient_name,
+                      age: 0,
+                      gender: '',
+                      chiefComplaint: appointment.symptoms || appointment.reason || 'No complaint provided',
+                      triageLevel: triageLevel as 'high' | 'medium' | 'low',
+                      waitTime: '0 min',
+                      status: 'waiting',
+                      phone: '',
+                      appointmentTime: appointment.appointment_time,
+                    } as QueuePatient)}
+                    className={`p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
+                      triageLevel === 'high'
+                        ? 'border-destructive bg-destructive/5 hover:border-destructive/80'
+                        : triageLevel === 'medium'
+                        ? 'border-warning bg-warning/5 hover:border-warning/80'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-foreground">{appointment.patient_name}</h4>
+                          {getTriageBadge(triageLevel as 'high' | 'medium' | 'low')}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {appointment.appointment_date} at {appointment.appointment_time}
+                        </p>
+                      </div>
+                      {getStatusBadge('waiting')}
+                    </div>
+                    <div className="mb-3">
+                      <p className="text-sm font-medium text-foreground mb-1">Chief Complaint:</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {appointment.symptoms || appointment.reason || 'No complaint provided'}
+                      </p>
+                      {summary && (
+                        <div className="mt-2 p-2 bg-muted rounded text-xs">
+                          <p className="font-medium mb-1">AI Summary:</p>
+                          <p className="text-muted-foreground line-clamp-2">{summary.summary}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between pt-3 border-t border-border">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        {appointment.appointment_date}
+                      </div>
+                      <Button size="sm" variant="outline" className="text-xs">
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+          )}
+          {/* Fallback to mock data if no appointments */}
+          {appointments.length === 0 && patientQueue.map((patient) => (
             <div
               key={patient.id}
               onClick={() => handlePatientClick(patient)}
@@ -783,6 +950,19 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                   </div>
                 </div>
               </SheetHeader>
+              
+              {/* AI Patient Summary */}
+              {patientSummaries[selectedPatient.id] && (
+                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <h4 className="font-semibold text-sm text-foreground">AI-Generated Patient Summary</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                    {patientSummaries[selectedPatient.id].summary}
+                  </p>
+                </div>
+              )}
 
               {/* Patient Profile Section */}
               <div className="space-y-4">
@@ -962,8 +1142,30 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                   </div>
                 )}
 
+                {/* Show medical records from backend */}
+                {patientSummaries[selectedPatient.id]?.medical_records && patientSummaries[selectedPatient.id].medical_records.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-muted-foreground">Medical Records (Backend)</h4>
+                    {patientSummaries[selectedPatient.id].medical_records.map((record: any) => (
+                      <div key={record.record_id} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <h5 className="font-medium text-foreground">{record.title}</h5>
+                            <p className="text-xs text-muted-foreground">{record.record_type} • {record.date}</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{record.description}</p>
+                        {record.doctor_name && (
+                          <p className="text-xs text-muted-foreground mt-1">By: {record.doctor_name}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 {(!selectedPatient.labReports || selectedPatient.labReports.length === 0) &&
-                 (!selectedPatient.prescriptions || selectedPatient.prescriptions.length === 0) && (
+                 (!selectedPatient.prescriptions || selectedPatient.prescriptions.length === 0) &&
+                 (!patientSummaries[selectedPatient.id]?.medical_records || patientSummaries[selectedPatient.id].medical_records.length === 0) && (
                   <p className="text-muted-foreground text-center py-4 border rounded-lg">
                     No medical records available
                   </p>
