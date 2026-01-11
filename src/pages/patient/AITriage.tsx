@@ -66,7 +66,7 @@ interface TriageSession {
   recommended_doctor: string | null;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
 
 export const AITriage: React.FC = () => {
   const { user } = useAuth();

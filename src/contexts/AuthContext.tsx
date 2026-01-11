@@ -4,7 +4,7 @@ import { User, UserRole, AuthContextType } from '@/types/auth';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // API base URL - adjust if your backend runs on a different port
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.user) {
         setUser(data.user);
       } else {
