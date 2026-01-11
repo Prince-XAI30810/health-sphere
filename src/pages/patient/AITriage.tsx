@@ -12,7 +12,23 @@ import {
   CheckCircle,
   Calendar,
   Phone,
+  Clock,
+  Plus,
+  MessageSquare,
 } from 'lucide-react';
+
+interface TriageSession {
+  id: number;
+  date: string;
+  symptom: string;
+  status: 'high' | 'medium' | 'low';
+}
+
+const previousSessions: TriageSession[] = [
+  { id: 1, date: 'Today, 10:30 AM', symptom: 'Severe Migraine', status: 'medium' },
+  { id: 2, date: 'Jan 8, 2026', symptom: 'Mild Fever', status: 'low' },
+  { id: 3, date: 'Dec 25, 2025', symptom: 'Chest Pain', status: 'high' },
+];
 
 interface Message {
   id: number;
@@ -134,10 +150,40 @@ export const AITriage: React.FC = () => {
       title="AI Symptom Checker"
       subtitle="Describe your symptoms for an AI-powered health assessment"
     >
-      <div className="max-w-4xl mx-auto">
-        <div className="card-elevated overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-10rem)]">
+        {/* History Sidebar */}
+        <div className="w-full lg:w-80 flex-shrink-0 space-y-4">
+          <Button className="w-full" size="lg">
+            <Plus className="w-4 h-4 mr-2" />
+            New Assessment
+          </Button>
+
+          <div className="card-elevated p-4 h-[calc(100%-4rem)] overflow-y-auto">
+            <h3 className="font-semibold text-muted-foreground text-sm mb-4 uppercase tracking-wider">Previous Sessions</h3>
+            <div className="space-y-3">
+              {previousSessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="p-3 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors cursor-pointer group"
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-medium text-foreground text-sm truncate">{session.symptom}</span>
+                    {getTriageIcon(session.status)}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3" />
+                    {session.date}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 card-elevated overflow-hidden flex flex-col min-h-[500px]">
           {/* Chat Header */}
-          <div className="bg-gradient-hero p-4 flex items-center gap-3">
+          <div className="bg-gradient-hero p-4 flex items-center gap-3 flex-shrink-0">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
             </div>
@@ -149,20 +195,18 @@ export const AITriage: React.FC = () => {
           </div>
 
           {/* Messages */}
-          <div className="h-[500px] overflow-y-auto p-6 space-y-6 custom-scrollbar bg-muted/20">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-muted/20">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-3 animate-slide-up ${
-                  message.type === 'user' ? 'flex-row-reverse' : ''
-                }`}
+                className={`flex gap-3 animate-slide-up ${message.type === 'user' ? 'flex-row-reverse' : ''
+                  }`}
               >
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.type === 'user'
+                  className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-secondary text-secondary-foreground'
-                  }`}
+                    }`}
                 >
                   {message.type === 'user' ? (
                     <User className="w-5 h-5" />
@@ -171,16 +215,14 @@ export const AITriage: React.FC = () => {
                   )}
                 </div>
                 <div
-                  className={`max-w-[75%] ${
-                    message.type === 'user' ? 'text-right' : ''
-                  }`}
+                  className={`max-w-[85%] lg:max-w-[75%] ${message.type === 'user' ? 'text-right' : ''
+                    }`}
                 >
                   <div
-                    className={`inline-block p-4 rounded-2xl ${
-                      message.type === 'user'
+                    className={`inline-block p-4 rounded-2xl ${message.type === 'user'
                         ? 'bg-primary text-primary-foreground rounded-br-md'
                         : 'bg-card border border-border rounded-bl-md shadow-sm'
-                    }`}
+                      }`}
                   >
                     {message.triageLevel && (
                       <div className="flex items-center gap-2 mb-3">
@@ -188,9 +230,9 @@ export const AITriage: React.FC = () => {
                         {getTriageBadge(message.triageLevel)}
                       </div>
                     )}
-                    <p className="text-sm whitespace-pre-line">{message.content}</p>
+                    <p className="text-sm whitespace-pre-line text-left">{message.content}</p>
                     {message.suggestions && (
-                      <div className="flex flex-wrap gap-2 mt-4">
+                      <div className="flex flex-wrap gap-2 mt-4 text-left">
                         {message.suggestions.map((suggestion, idx) => (
                           <Button
                             key={idx}
@@ -237,7 +279,7 @@ export const AITriage: React.FC = () => {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSubmit} className="p-4 border-t border-border bg-card">
+          <form onSubmit={handleSubmit} className="p-4 border-t border-border bg-card flex-shrink-0">
             <div className="flex gap-3">
               <Input
                 value={input}

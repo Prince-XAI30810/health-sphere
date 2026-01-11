@@ -44,11 +44,7 @@ const recentRecords = [
   { id: 3, title: 'Prescription - Antibiotics', date: 'Jan 3, 2026', type: 'Prescription' },
 ];
 
-const vitals = [
-  { label: 'Heart Rate', value: '72', unit: 'bpm', icon: Heart, color: 'text-destructive' },
-  { label: 'Blood Pressure', value: '120/80', unit: 'mmHg', icon: Activity, color: 'text-primary' },
-  { label: 'Temperature', value: '98.6', unit: '°F', icon: Thermometer, color: 'text-warning' },
-];
+
 
 export const PatientDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -128,43 +124,11 @@ export const PatientDashboard: React.FC = () => {
           icon={CreditCard}
           iconColor="text-warning"
         />
-        <StatCard
-          title="Health Score"
-          value="85"
-          change="+5 from last month"
-          changeType="positive"
-          icon={Heart}
-          iconColor="text-success"
-        />
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Vitals Card */}
-        <div className="card-elevated p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-foreground">Latest Vitals</h2>
-            <Badge variant="info">Updated today</Badge>
-          </div>
-          <div className="space-y-4">
-            {vitals.map((vital) => {
-              const Icon = vital.icon;
-              return (
-                <div key={vital.label} className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg bg-background ${vital.color}`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium text-muted-foreground">{vital.label}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xl font-bold text-foreground">{vital.value}</span>
-                    <span className="text-sm text-muted-foreground ml-1">{vital.unit}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+
 
         {/* Upcoming Appointments */}
         <div className="card-elevated p-6">

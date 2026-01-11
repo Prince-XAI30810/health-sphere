@@ -14,6 +14,7 @@ import PatientDashboard from "./pages/patient/PatientDashboard";
 import AITriage from "./pages/patient/AITriage";
 import Telehealth from "./pages/patient/Telehealth";
 import Billing from "./pages/patient/Billing";
+import HealthRecords from "./pages/patient/HealthRecords";
 
 // Doctor Pages
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -106,7 +107,7 @@ const AppRoutes = () => {
         path="/patient/records"
         element={
           <ProtectedRoute allowedRoles={["patient"]}>
-            <PatientDashboard />
+            <HealthRecords />
           </ProtectedRoute>
         }
       />
