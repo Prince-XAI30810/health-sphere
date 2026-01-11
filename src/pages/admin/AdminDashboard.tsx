@@ -4,6 +4,11 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/shared/StatCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useAuth } from '@/contexts/AuthContext';
 import {
   BedDouble,
@@ -27,39 +32,7 @@ const bedStats = {
   reserved: 5,
 };
 
-// AI Insights and Alerts Data
-const aiInsights = [
-  {
-    id: 1,
-    type: 'prediction',
-    title: 'Peak Admission Forecast',
-    description: 'Based on historical data, expect 15-20 new admissions tomorrow between 10 AM - 2 PM. Consider preparing 5-8 additional beds.',
-    icon: TrendingUp,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    priority: 'high',
-  },
-  {
-    id: 2,
-    type: 'optimization',
-    title: 'Staff Allocation Suggestion',
-    description: 'ICU ward shows 85% occupancy. Recommend shifting 2 nurses from General Ward to ICU for optimal coverage.',
-    icon: Users,
-    color: 'text-secondary',
-    bgColor: 'bg-secondary/10',
-    priority: 'medium',
-  },
-  {
-    id: 3,
-    type: 'efficiency',
-    title: 'Wait Time Optimization',
-    description: 'Average wait time reduced by 23% this week. Current staffing levels are optimal for current patient load.',
-    icon: Clock,
-    color: 'text-success',
-    bgColor: 'bg-success/10',
-    priority: 'low',
-  },
-];
+
 
 const criticalAlerts = [
   {
@@ -73,6 +46,7 @@ const criticalAlerts = [
     urgency: 'critical',
     action: 'Reorder Now',
     icon: Package,
+    aiReason: 'Consumption rate increased by 15% due to seasonal flu outbreak. Predictive model suggests stockout in 48h.',
   },
   {
     id: 2,
@@ -97,6 +71,7 @@ const criticalAlerts = [
     urgency: 'medium',
     action: 'Plan Reorder',
     icon: Package,
+    aiReason: 'Historical usage patterns indicate peak demand in upcoming week. Reorder recommended to maintain safety stock.',
   },
   {
     id: 4,
@@ -121,6 +96,7 @@ const criticalAlerts = [
     urgency: 'high',
     action: 'Investigate',
     icon: FlaskConical,
+    aiReason: 'Abnormal depletion rate detected. Possible wastage or unrecorded usage in Emergency Ward.',
   },
 ];
 
@@ -170,56 +146,9 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* AI Insights & Alerts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        {/* AI Insights */}
-        <div className="card-elevated p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">AI Insights</h2>
-                <p className="text-sm text-muted-foreground">Predictive analytics & recommendations</p>
-              </div>
-            </div>
-            <Badge variant="secondary" className="gap-1">
-              <Zap className="w-3 h-3" />
-              Live
-            </Badge>
-          </div>
 
-          <div className="space-y-4">
-            {aiInsights.map((insight) => {
-              const Icon = insight.icon;
-              return (
-                <div
-                  key={insight.id}
-                  className={`p-4 rounded-xl border ${insight.bgColor} border-border/50 hover:border-border transition-colors`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-lg ${insight.bgColor} flex items-center justify-center flex-shrink-0`}>
-                      <Icon className={`w-4 h-4 ${insight.color}`} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-sm text-foreground">{insight.title}</h4>
-                        {insight.priority === 'high' && (
-                          <Badge variant="destructive" className="text-xs">High Priority</Badge>
-                        )}
-                        {insight.priority === 'medium' && (
-                          <Badge variant="warning" className="text-xs">Medium</Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{insight.description}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
+      <div className="mt-8">
         {/* Critical Alerts */}
         <div className="card-elevated p-6">
           <div className="flex items-center justify-between mb-6">
@@ -246,7 +175,7 @@ export const AdminDashboard: React.FC = () => {
                 high: 'border-warning bg-warning/10',
                 medium: 'border-blue-500/50 bg-blue-500/5',
               };
-              
+
               return (
                 <div
                   key={alert.id}
@@ -254,14 +183,38 @@ export const AdminDashboard: React.FC = () => {
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-8 h-8 rounded-lg ${urgencyColors[alert.urgency]} flex items-center justify-center flex-shrink-0`}>
-                      <Icon className={`w-4 h-4 ${
-                        alert.urgency === 'critical' ? 'text-destructive' :
+                      <Icon className={`w-4 h-4 ${alert.urgency === 'critical' ? 'text-destructive' :
                         alert.urgency === 'high' ? 'text-warning' : 'text-blue-500'
-                      }`} />
+                        }`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1">
-                        <h4 className="font-semibold text-sm text-foreground">{alert.title}</h4>
+                        <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                          {alert.title}
+                          {alert.type === 'inventory' && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="inline-flex items-center justify-center rounded-full hover:bg-violet-50 p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500/20">
+                                  <Sparkles className="w-3 h-3 text-violet-500 cursor-pointer" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80 p-4">
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2 border-b border-border pb-2">
+                                    <div className="w-6 h-6 rounded-md bg-violet-100 flex items-center justify-center">
+                                      <Sparkles className="w-3 h-3 text-violet-600" />
+                                    </div>
+                                    <h4 className="font-semibold text-sm text-foreground">AI Analysis</h4>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground leading-relaxed">
+                                    {/* @ts-ignore */}
+                                    {alert.aiReason}
+                                  </p>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </h4>
                         <Badge
                           variant={alert.urgency === 'critical' ? 'destructive' : alert.urgency === 'high' ? 'warning' : 'secondary'}
                           className="text-xs flex-shrink-0"
@@ -270,7 +223,7 @@ export const AdminDashboard: React.FC = () => {
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">{alert.message}</p>
-                      
+
                       {alert.type === 'inventory' && (
                         <div className="flex items-center gap-4 mb-3">
                           <div className="text-xs">
@@ -279,16 +232,15 @@ export const AdminDashboard: React.FC = () => {
                           </div>
                           <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                             <div
-                              className={`h-full ${
-                                alert.urgency === 'critical' ? 'bg-destructive' :
+                              className={`h-full ${alert.urgency === 'critical' ? 'bg-destructive' :
                                 alert.urgency === 'high' ? 'bg-warning' : 'bg-blue-500'
-                              }`}
+                                }`}
                               style={{ width: `${Math.min((alert.currentStock / alert.threshold) * 100, 100)}%` }}
                             />
                           </div>
                         </div>
                       )}
-                      
+
                       {alert.type === 'bed' && (
                         <div className="flex items-center gap-2 mb-3 text-xs">
                           <BedDouble className="w-3 h-3 text-muted-foreground" />
@@ -297,7 +249,7 @@ export const AdminDashboard: React.FC = () => {
                           </span>
                         </div>
                       )}
-                      
+
                       <Button
                         size="sm"
                         variant={alert.urgency === 'critical' ? 'destructive' : 'outline'}

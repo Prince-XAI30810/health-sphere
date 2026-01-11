@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,7 +23,18 @@ import {
   ArrowRight,
   Plus,
   Filter,
+  FileText,
+  CheckCircle2,
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Bed {
   id: string;
@@ -41,7 +53,7 @@ interface Ward {
   beds: Bed[];
 }
 
-const wardsData: Ward[] = [
+const initialWardsData: Ward[] = [
   {
     name: 'ICU',
     beds: [
@@ -79,8 +91,76 @@ const wardsData: Ward[] = [
 ];
 
 export const BedManagement: React.FC = () => {
+  const [wards, setWards] = useState<Ward[]>(initialWardsData);
   const [selectedBed, setSelectedBed] = useState<Bed | null>(null);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [targetBedId, setTargetBedId] = useState<string>('');
+  const { toast } = useToast();
+
+  const handleDischarge = () => {
+    if (!selectedBed) return;
+
+    const newWards = wards.map(ward => ({
+      ...ward,
+      beds: ward.beds.map(bed => {
+        if (bed.id === selectedBed.id) {
+          return { ...bed, status: 'available' as const, patient: undefined };
+        }
+        return bed;
+      })
+    }));
+
+    setWards(newWards);
+    setSelectedBed(null);
+
+    toast({
+      title: "Patient Discharged",
+      description: `Patient ${selectedBed.patient?.name} has been discharged successfully.`,
+      variant: "default",
+    });
+  };
+
+  const handleTransfer = () => {
+    if (!selectedBed || !targetBedId) return;
+
+    // Find target bed details
+    let targetBedFound = false;
+    let newWards = [...wards];
+
+    // Remove patient from current bed
+    newWards = newWards.map(ward => ({
+      ...ward,
+      beds: ward.beds.map(bed => {
+        if (bed.id === selectedBed.id) {
+          return { ...bed, status: 'available' as const, patient: undefined };
+        }
+        return bed;
+      })
+    }));
+
+    // Add patient to new bed
+    newWards = newWards.map(ward => ({
+      ...ward,
+      beds: ward.beds.map(bed => {
+        if (bed.id === targetBedId) {
+          return { ...bed, status: 'occupied' as const, patient: selectedBed.patient };
+        }
+        return bed;
+      })
+    }));
+
+    setWards(newWards);
+    setShowTransferDialog(false);
+    setSelectedBed(null);
+    setTargetBedId('');
+  };
+
+  // Get all available beds for transfer
+  const availableBedsList = wards.flatMap(ward =>
+    ward.beds
+      .filter(bed => bed.status === 'available')
+      .map(bed => ({ ...bed, wardName: ward.name }))
+  );
 
   const getBedColor = (status: Bed['status']) => {
     switch (status) {
@@ -108,12 +188,12 @@ export const BedManagement: React.FC = () => {
     }
   };
 
-  const totalBeds = wardsData.reduce((sum, ward) => sum + ward.beds.length, 0);
-  const occupiedBeds = wardsData.reduce(
+  const totalBeds = wards.reduce((sum, ward) => sum + ward.beds.length, 0);
+  const occupiedBeds = wards.reduce(
     (sum, ward) => sum + ward.beds.filter((b) => b.status === 'occupied').length,
     0
   );
-  const availableBeds = wardsData.reduce(
+  const availableBeds = wards.reduce(
     (sum, ward) => sum + ward.beds.filter((b) => b.status === 'available').length,
     0
   );
@@ -203,16 +283,16 @@ export const BedManagement: React.FC = () => {
       </div>
 
       {/* Ward Tabs */}
-      <Tabs defaultValue={wardsData[0].name}>
+      <Tabs defaultValue={wards[0].name}>
         <TabsList className="mb-6">
-          {wardsData.map((ward) => (
+          {wards.map((ward) => (
             <TabsTrigger key={ward.name} value={ward.name}>
               {ward.name} ({ward.beds.length})
             </TabsTrigger>
           ))}
         </TabsList>
 
-        {wardsData.map((ward) => (
+        {wards.map((ward) => (
           <TabsContent key={ward.name} value={ward.name}>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {ward.beds.map((bed) => (
@@ -250,10 +330,10 @@ export const BedManagement: React.FC = () => {
               {selectedBed?.status === 'available'
                 ? 'This bed is ready for new admissions'
                 : selectedBed?.status === 'occupied'
-                ? 'Currently occupied by a patient'
-                : selectedBed?.status === 'reserved'
-                ? 'Reserved for incoming patient'
-                : 'Under maintenance'}
+                  ? 'Currently occupied by a patient'
+                  : selectedBed?.status === 'reserved'
+                    ? 'Reserved for incoming patient'
+                    : 'Under maintenance'}
             </DialogDescription>
           </DialogHeader>
 
@@ -288,7 +368,8 @@ export const BedManagement: React.FC = () => {
                   <ArrowRight className="w-4 h-4 mr-2" />
                   Transfer
                 </Button>
-                <Button variant="destructive" className="flex-1">
+                <Button variant="destructive" className="flex-1" onClick={handleDischarge}>
+                  <FileText className="w-4 h-4 mr-2" />
                   Discharge
                 </Button>
               </div>
@@ -303,7 +384,46 @@ export const BedManagement: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+
+      {/* Transfer Dialog */}
+      <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transfer Patient</DialogTitle>
+            <DialogDescription>
+              Select a new bed for {selectedBed?.patient?.name}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Select Target Bed</Label>
+              <Select value={targetBedId} onValueChange={setTargetBedId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a bed" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableBedsList.map(bed => (
+                    <SelectItem key={bed.id} value={bed.id}>
+                      {bed.wardName} - Bed {bed.number}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setShowTransferDialog(false)}>Cancel</Button>
+            <Button onClick={handleTransfer} disabled={!targetBedId}>
+              Confirm Transfer
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
+    </DashboardLayout >
   );
 };
 
