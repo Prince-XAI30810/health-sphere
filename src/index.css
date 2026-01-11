@@ -17,11 +17,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 27%;
 
-    /* Primary - Sky Blue (Trust, Clinical) */
-    --primary: 199 89% 48%;
+    /* Primary - Medical Teal (Professional, Mature Hospital) */
+    --primary: 175 64% 35%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 199 89% 94%;
-    --primary-dark: 199 89% 38%;
+    --primary-light: 175 50% 94%;
+    --primary-dark: 175 64% 25%;
 
     /* Secondary - Emerald (Health, Success) */
     --secondary: 160 84% 39%;
@@ -54,7 +54,7 @@
     /* Borders & Inputs */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 199 89% 48%;
+    --ring: 175 64% 35%;
 
     --radius: 0.75rem;
 
@@ -62,15 +62,15 @@
     --triage-high: 0 84% 60%;
     --triage-medium: 38 92% 50%;
     --triage-low: 160 84% 39%;
-    
+
     --bed-available: 160 84% 39%;
     --bed-occupied: 0 84% 60%;
     --bed-reserved: 38 92% 50%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(199 89% 38%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(175 64% 35%) 0%, hsl(175 64% 25%) 100%);
     --gradient-secondary: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(160 84% 29%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(160 84% 39%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(190 60% 30%) 0%, hsl(175 64% 35%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
 
     /* Shadows */
@@ -143,12 +143,18 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-semibold tracking-tight text-foreground;
   }
 }
 
 @layer components {
+
   /* Healthcare Card Variants */
   .card-elevated {
     @apply bg-card rounded-xl border border-border/50;
@@ -207,8 +213,15 @@
 
   /* Animations */
   @keyframes pulse-soft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.7;
+    }
   }
 
   @keyframes slide-up {
@@ -216,6 +229,7 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -223,13 +237,25 @@
   }
 
   @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes typing {
-    0%, 60% { opacity: 1; }
-    30% { opacity: 0.4; }
+
+    0%,
+    60% {
+      opacity: 1;
+    }
+
+    30% {
+      opacity: 0.4;
+    }
   }
 
   .animate-pulse-soft {

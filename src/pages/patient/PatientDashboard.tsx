@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/shared/StatCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  getActivePrescriptions,
+  getActivePrescriptionCount,
+  downloadPrescriptionPDF,
+  Prescription,
+} from '@/data/prescriptions';
+import { getComplianceStats } from '@/data/medicineWallet';
 import {
   Calendar,
   MessageSquare,
@@ -25,6 +40,9 @@ import {
   Info,
   Droplet,
   Zap,
+  Eye,
+  User,
+  Download,
 } from 'lucide-react';
 
 const upcomingAppointments = [
@@ -52,10 +70,13 @@ const recentRecords = [
   { id: 3, title: 'Prescription - Antibiotics', date: 'Jan 3, 2026', type: 'Prescription' },
 ];
 
-
+// Get prescriptions from shared data
+const activePrescriptions = getActivePrescriptions();
+const activePrescriptionCount = getActivePrescriptionCount();
 
 export const PatientDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [showPrescriptionsModal, setShowPrescriptionsModal] = useState(false);
 
   return (
     <DashboardLayout
@@ -496,20 +517,182 @@ export const PatientDashboard: React.FC = () => {
         />
         <StatCard
           title="Active Prescriptions"
-          value="3"
+          value={activePrescriptionCount}
           change="1 refill needed"
           changeType="negative"
           icon={Pill}
           iconColor="text-secondary"
+          onClick={() => setShowPrescriptionsModal(true)}
         />
-        <StatCard
-          title="Outstanding Bills"
-          value="₹2,450"
-          change="Due in 5 days"
-          changeType="negative"
-          icon={CreditCard}
-          iconColor="text-warning"
-        />
+        {/* Medicine Intake Card with AI Analysis */}
+        <div className="card-elevated p-6 hover:border-primary/30 transition-colors">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+                <Pill className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Medicine Intake</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {(() => {
+                    const stats = getComplianceStats();
+                    return `${stats.complianceRate}%`;
+                  })()}
+                </p>
+              </div>
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="p-2 hover:bg-primary/10 rounded-full transition-colors">
+                  <Info className="w-5 h-5 text-primary" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-96 max-h-[500px] overflow-y-auto" align="end">
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-violet-600" />
+                    AI Medicine Intake Analysis
+                  </h4>
+
+                  {/* Compliance Overview */}
+                  <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                    <p className="text-xs font-medium text-foreground">Your Compliance Summary:</p>
+                    {(() => {
+                      const stats = getComplianceStats();
+                      return (
+                        <>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">Weekly Compliance:</span>
+                            <span className={`font-semibold ${stats.complianceRate >= 80 ? 'text-green-600' : stats.complianceRate >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                              {stats.complianceRate}%
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">Today's Progress:</span>
+                            <span className="font-semibold text-foreground">
+                              {stats.todayProgress.taken}/{stats.todayProgress.total} doses
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">Current Streak:</span>
+                            <span className="font-semibold text-orange-600">{stats.streak} days</span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* AI Insights */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-foreground">AI Insights on Your Pattern:</p>
+
+                    {(() => {
+                      const stats = getComplianceStats();
+                      const insights = [];
+
+                      if (stats.complianceRate < 70) {
+                        insights.push({
+                          type: 'warning',
+                          icon: '⚠️',
+                          text: 'Your medication adherence is below optimal. Missing doses can reduce treatment effectiveness by up to 50%.',
+                          suggestion: 'Set additional reminders or ask a family member to help remind you.'
+                        });
+                      }
+
+                      if (stats.todayProgress.taken < stats.todayProgress.total) {
+                        insights.push({
+                          type: 'info',
+                          icon: '💊',
+                          text: `You have ${stats.todayProgress.total - stats.todayProgress.taken} pending dose(s) for today.`,
+                          suggestion: 'Check your Medicine Schedule to mark them as taken.'
+                        });
+                      }
+
+                      if (stats.complianceRate >= 80) {
+                        insights.push({
+                          type: 'success',
+                          icon: '✓',
+                          text: 'Excellent medication adherence! Maintaining this consistency improves treatment outcomes significantly.',
+                          suggestion: 'Keep up the great work!'
+                        });
+                      }
+
+                      if (stats.streak === 0) {
+                        insights.push({
+                          type: 'warning',
+                          icon: '🔔',
+                          text: 'Your streak was broken. Consistent medication timing helps maintain drug levels in your body.',
+                          suggestion: 'Try to take medicines at the same time each day.'
+                        });
+                      } else if (stats.streak >= 7) {
+                        insights.push({
+                          type: 'success',
+                          icon: '🔥',
+                          text: `Amazing! You've maintained a ${stats.streak}-day streak. This consistency greatly improves treatment effectiveness.`,
+                          suggestion: 'You\'re building a healthy habit!'
+                        });
+                      }
+
+                      // Add general insight if few specific ones
+                      if (insights.length < 2) {
+                        insights.push({
+                          type: 'info',
+                          icon: '💡',
+                          text: 'Taking medications with meals can help you remember and reduce stomach upset for some medicines.',
+                          suggestion: 'Check instructions for each medicine about food timing.'
+                        });
+                      }
+
+                      return insights.map((insight, idx) => (
+                        <div key={idx} className={`rounded-lg p-2.5 text-xs ${insight.type === 'warning' ? 'bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800' :
+                            insight.type === 'success' ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800' :
+                              'bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800'
+                          }`}>
+                          <p className="font-medium mb-1">
+                            <span className="mr-1">{insight.icon}</span>
+                            {insight.text}
+                          </p>
+                          <p className="text-muted-foreground italic">💡 {insight.suggestion}</p>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+
+                  {/* Action Link */}
+                  <div className="pt-2 border-t border-border">
+                    <Link
+                      to="/patient/medicine-wallet"
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                    >
+                      View Full Medicine Schedule
+                      <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            {(() => {
+              const stats = getComplianceStats();
+              const missedToday = stats.todayProgress.total - stats.todayProgress.taken;
+              if (missedToday > 0) {
+                return (
+                  <span className="text-amber-600 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {missedToday} pending today
+                  </span>
+                );
+              }
+              return (
+                <span className="text-success flex items-center gap-1">
+                  <TrendingUp className="w-4 h-4" />
+                  All doses taken today
+                </span>
+              );
+            })()}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -570,6 +753,94 @@ export const PatientDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Prescriptions Modal */}
+      <Dialog open={showPrescriptionsModal} onOpenChange={setShowPrescriptionsModal}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pill className="w-5 h-5 text-secondary" />
+              Active Prescriptions
+            </DialogTitle>
+            <DialogDescription>
+              All your current active prescriptions and medications
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {activePrescriptions.map((prescription) => (
+              <div
+                key={prescription.id}
+                className="p-5 border border-border rounded-xl hover:border-secondary/30 transition-colors bg-card"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                      <User className="w-5 h-5 text-secondary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground">{prescription.doctor}</h4>
+                      <p className="text-sm text-muted-foreground">{prescription.specialty}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="success" className="mb-1">Active</Badge>
+                    <p className="text-xs text-muted-foreground">{prescription.date}</p>
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <Badge variant="outline">{prescription.diagnosis}</Badge>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">Medications:</p>
+                  {prescription.medications.map((med, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                      <Pill className="w-4 h-4 text-secondary shrink-0" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{med.name}</span>
+                          <span className="text-xs text-muted-foreground">- {med.dosage}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {med.frequency} • {med.duration}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-border flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadPrescriptionPDF(prescription)}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/patient/prescriptions">
+                      <Eye className="w-4 h-4 mr-2" />
+                      View Details
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-border">
+            <Button className="w-full" asChild>
+              <Link to="/patient/prescriptions">
+                View All Prescriptions
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

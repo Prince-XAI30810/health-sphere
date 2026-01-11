@@ -128,6 +128,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   </div>
                 </PopoverContent>
               </Popover>
+              {/* Xebia Branding */}
+              <div className="flex items-center gap-2 pl-4 border-l border-border">
+                <span className="text-sm font-bold text-primary tracking-wide">Xebia</span>
+              </div>
             </div>
           </div>
         </header>

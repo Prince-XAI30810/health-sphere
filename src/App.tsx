@@ -19,6 +19,7 @@ import Medications from "./pages/patient/Medications";
 import Appointments from "./pages/patient/Appointments";
 import Prescriptions from "./pages/patient/Prescriptions";
 import Notifications from "./pages/patient/Notifications";
+import MedicineWallet from "./pages/patient/MedicineWallet";
 
 // Doctor Pages
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -136,6 +137,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={["patient"]}>
             <Medications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/medicine-wallet"
+        element={
+          <ProtectedRoute allowedRoles={["patient"]}>
+            <MedicineWallet />
           </ProtectedRoute>
         }
       />

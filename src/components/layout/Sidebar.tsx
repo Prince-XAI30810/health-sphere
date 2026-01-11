@@ -25,6 +25,7 @@ import {
   UserCog,
   Activity,
   Heart,
+  Wallet,
 } from 'lucide-react';
 
 interface NavItem {
@@ -38,6 +39,8 @@ const patientNavItems: NavItem[] = [
   { label: 'AI Triage', href: '/patient/triage', icon: MessageSquare },
   { label: 'Appointments', href: '/patient/appointments', icon: Calendar },
   { label: 'Telehealth', href: '/patient/telehealth', icon: Video },
+  { label: 'Prescriptions', href: '/patient/prescriptions', icon: Pill },
+  { label: 'Medicine Schedule', href: '/patient/medicine-wallet', icon: Wallet },
   { label: 'Health Records', href: '/patient/records', icon: FileText },
   { label: 'Notifications', href: '/patient/notifications', icon: Bell },
 ];

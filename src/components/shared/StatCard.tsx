@@ -10,6 +10,7 @@ interface StatCardProps {
   icon: LucideIcon;
   iconColor?: string;
   className?: string;
+  onClick?: () => void;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -20,6 +21,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon: Icon,
   iconColor = 'text-primary',
   className,
+  onClick,
 }) => {
   const changeColors = {
     positive: 'text-success',
@@ -38,7 +40,14 @@ export const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <div className={cn('card-stat animate-fade-in', className)}>
+    <div
+      className={cn(
+        'card-stat animate-fade-in',
+        onClick && 'cursor-pointer hover:border-primary/30 hover:shadow-md transition-all',
+        className
+      )}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
