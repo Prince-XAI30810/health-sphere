@@ -150,6 +150,7 @@ def get_default_analysis(patient_name: str, chief_complaint: str) -> Dict:
 @router.post("/process-recording")
 async def process_recording(
     audio: UploadFile = File(...),
+    audio_pcm: UploadFile = File(None),
     patient_id: str = Form(...),
     patient_name: str = Form(...),
     chief_complaint: str = Form(""),
@@ -157,41 +158,63 @@ async def process_recording(
 ):
     """
     Process an audio recording: transcribe and extract KPIs using LLM.
+    Saves the recording persistently. 
+    If audio_pcm is provided, uses that for transcription (Azure Speech friendly format).
     """
     try:
-        # Save the uploaded audio to a temp file
-        temp_dir = tempfile.gettempdir()
-        audio_path = os.path.join(temp_dir, f"consultation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav")
+        # Generate consultation ID first
+        consultation_id = f"CONS-{int(datetime.now().timestamp() * 1000)}"
+        
+        # Determine file extension from upload or default to .wav
+        file_ext = "wav"
+        if audio.filename and "." in audio.filename:
+            file_ext = audio.filename.split(".")[-1]
+            
+        # Save the uploaded audio/video to persistent file
+        filename = f"{consultation_id}.{file_ext}"
+        audio_path = RECORDINGS_DIR / filename
         
         with open(audio_path, 'wb') as f:
             content = await audio.read()
             f.write(content)
         
-        logger.info(f"Audio file saved to {audio_path}")
+        logger.info(f"Recording file saved to {audio_path}")
+
+        # Handle transcription source
+        transcription_path = audio_path
+        
+        if audio_pcm:
+            # Save the specific PCM audio for transcription
+            pcm_filename = f"{consultation_id}_pcm.wav"
+            pcm_path = RECORDINGS_DIR / pcm_filename
+            with open(pcm_path, 'wb') as f:
+                content = await audio_pcm.read()
+                f.write(content)
+            transcription_path = pcm_path
+            logger.info(f"Using PCM audio for transcription: {pcm_path}")
         
         # Transcribe the audio
         speech_helper = AzureSpeechHelper()
-        transcript = speech_helper.transcribe_from_file(audio_path)
+        transcript = speech_helper.transcribe_from_file(str(transcription_path))
         
         logger.info(f"Transcription completed: {transcript[:100]}..." if transcript else "No transcription")
         
+        # Save transcript to file
+        transcript_filename = f"{consultation_id}.txt"
+        transcript_path = RECORDINGS_DIR / transcript_filename
+        with open(transcript_path, "w", encoding="utf-8") as f:
+            f.write(transcript)
+        logger.info(f"Transcript saved to {transcript_path}")
+        
         # Extract KPIs using LLM
         ai_analysis = extract_kpis_from_transcript(transcript, patient_name, chief_complaint)
-        
-        # Clean up temp file
-        try:
-            os.remove(audio_path)
-        except:
-            pass
-        
-        # Generate consultation ID
-        consultation_id = f"CONS-{int(datetime.now().timestamp() * 1000)}"
         
         return JSONResponse({
             "success": True,
             "consultation_id": consultation_id,
             "transcript": transcript,
             "ai_analysis": ai_analysis,
+            "audio_file": str(filename),
             "message": "Recording processed successfully"
         })
         
