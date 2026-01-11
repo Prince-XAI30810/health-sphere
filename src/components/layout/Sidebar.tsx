@@ -54,7 +54,7 @@ const adminNavItems: NavItem[] = [
   { label: 'Bed Management', href: '/admin/beds', icon: BedDouble },
   { label: 'Roster', href: '/admin/roster', icon: UserCog },
   { label: 'Inventory', href: '/admin/inventory', icon: Package },
-  { label: 'Lab & Imaging', href: '/admin/lab', icon: FlaskConical },
+  { label: 'Equipment', href: '/admin/lab', icon: Settings },
 ];
 
 export const Sidebar: React.FC = () => {

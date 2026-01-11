@@ -31,6 +31,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import BedManagement from "./pages/admin/BedManagement";
 import Inventory from "./pages/admin/Inventory";
 import LabImaging from "./pages/admin/LabImaging";
+import Roster from "./pages/admin/Roster";
 
 const queryClient = new QueryClient();
 
@@ -245,7 +246,7 @@ const AppRoutes = () => {
         path="/admin/roster"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminDashboard />
+            <Roster />
           </ProtectedRoute>
         }
       />
