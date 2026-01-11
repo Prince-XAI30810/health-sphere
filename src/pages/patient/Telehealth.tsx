@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,13 +25,37 @@ interface ChatMessage {
   time: string;
 }
 
-const mockMessages: ChatMessage[] = [
-  { id: 1, sender: 'doctor', content: 'Hello Rahul, how are you feeling today?', time: '3:01 PM' },
-  { id: 2, sender: 'patient', content: 'Hi Doctor, I have been experiencing mild headaches for the past 2 days.', time: '3:02 PM' },
-  { id: 3, sender: 'doctor', content: 'I see. Have you been taking any medication for it?', time: '3:02 PM' },
-];
+interface TelehealthState {
+  doctorName?: string;
+  specialty?: string;
+  appointmentDate?: string;
+  appointmentTime?: string;
+}
 
 export const Telehealth: React.FC = () => {
+  const location = useLocation();
+  const state = location.state as TelehealthState | null;
+
+  // Get doctor info from navigation state or use defaults
+  const doctorName = state?.doctorName || 'Dr. Priya Patel';
+  const specialty = state?.specialty || 'General Physician';
+  const appointmentTime = state?.appointmentTime || '3:00 PM';
+
+  // Generate initials from doctor name
+  const doctorInitials = doctorName
+    .split(' ')
+    .filter(word => word.length > 0 && word !== 'Dr.')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'DR';
+
+  const mockMessages: ChatMessage[] = [
+    { id: 1, sender: 'doctor', content: 'Hello Rahul, how are you feeling today?', time: '3:01 PM' },
+    { id: 2, sender: 'patient', content: 'Hi Doctor, I have been experiencing mild headaches for the past 2 days.', time: '3:02 PM' },
+    { id: 3, sender: 'doctor', content: 'I see. Have you been taking any medication for it?', time: '3:02 PM' },
+  ];
+
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isInCall, setIsInCall] = useState(false);
@@ -65,17 +90,17 @@ export const Telehealth: React.FC = () => {
             </div>
             <h2 className="text-2xl font-bold text-foreground mb-2">Ready to Join?</h2>
             <p className="text-muted-foreground mb-6">
-              Your consultation with Dr. Priya Patel is scheduled for today at 3:00 PM
+              Your consultation with {doctorName} is scheduled for today at {appointmentTime}
             </p>
 
             <div className="bg-muted/50 rounded-xl p-6 mb-6">
               <div className="flex items-center justify-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xl font-bold">
-                  PP
+                  {doctorInitials}
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-foreground">Dr. Priya Patel</h3>
-                  <p className="text-sm text-muted-foreground">General Physician</p>
+                  <h3 className="font-semibold text-foreground">{doctorName}</h3>
+                  <p className="text-sm text-muted-foreground">{specialty}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <span className="w-2 h-2 bg-success rounded-full"></span>
                     <span className="text-xs text-success">Online</span>
@@ -124,10 +149,10 @@ export const Telehealth: React.FC = () => {
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center text-white">
                   <div className="w-32 h-32 rounded-full bg-secondary/80 mx-auto flex items-center justify-center text-4xl font-bold mb-4">
-                    PP
+                    {doctorInitials}
                   </div>
-                  <h3 className="text-xl font-semibold">Dr. Priya Patel</h3>
-                  <p className="text-white/70">General Physician</p>
+                  <h3 className="text-xl font-semibold">{doctorName}</h3>
+                  <p className="text-white/70">{specialty}</p>
                 </div>
               </div>
 
@@ -207,17 +232,15 @@ export const Telehealth: React.FC = () => {
                   key={msg.id}
                   className={`flex gap-2 ${msg.sender === 'patient' ? 'flex-row-reverse' : ''}`}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                    msg.sender === 'doctor' ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'
-                  }`}>
-                    {msg.sender === 'doctor' ? 'PP' : 'RS'}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${msg.sender === 'doctor' ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'
+                    }`}>
+                    {msg.sender === 'doctor' ? doctorInitials : 'RS'}
                   </div>
                   <div className={`max-w-[80%] ${msg.sender === 'patient' ? 'text-right' : ''}`}>
-                    <div className={`inline-block p-3 rounded-xl text-sm ${
-                      msg.sender === 'patient' 
-                        ? 'bg-primary text-primary-foreground rounded-br-md'
-                        : 'bg-muted rounded-bl-md'
-                    }`}>
+                    <div className={`inline-block p-3 rounded-xl text-sm ${msg.sender === 'patient'
+                      ? 'bg-primary text-primary-foreground rounded-br-md'
+                      : 'bg-muted rounded-bl-md'
+                      }`}>
                       {msg.content}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{msg.time}</p>

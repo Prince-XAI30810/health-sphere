@@ -227,14 +227,20 @@ Generate the summary now:"""
 {conversation_text}
 {records_summary}
 
-Create a brief 2-3 sentence summary highlighting:
-1. Main complaint/symptoms
-2. Pain level and urgency
-3. Key context from conversation
+Create a brief 3-4 line summary highlighting:
+1. Main complaint/symptoms and duration
+2. Pain level and urgency assessment
+3. Recommended doctor and specialty
+4. Key context for consultation
+
+Requirements:
+- Keep the summary EXACTLY 3-4 lines, no more
+- Be concise and professional
+- Include pain rating and triage information
 
 Respond in JSON format:
 {{
-    "summary": "Brief patient summary",
+    "summary": "3-4 line patient summary",
     "triage_score": "{triage_score}",
     "key_points": ["point1", "point2", "point3"]
 }}"""

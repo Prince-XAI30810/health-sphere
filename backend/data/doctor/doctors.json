@@ -100,6 +100,43 @@
       ],
       "phone": "+91 98765 43212",
       "email": "dr.anjali@mediverse.com"
+    },
+    {
+      "id": "doc4",
+      "name": "Dr. Vikram Singh",
+      "specialty": "Orthopedic Surgeon",
+      "qualifications": "MBBS, MS (Orthopedics), DNB (Orthopedics)",
+      "experience": "8 years",
+      "rating": 4.6,
+      "available_slots": [
+        {
+          "date": "2026-01-12",
+          "time": "9:30 AM",
+          "available": true
+        },
+        {
+          "date": "2026-01-12",
+          "time": "12:00 PM",
+          "available": true
+        },
+        {
+          "date": "2026-01-12",
+          "time": "4:00 PM",
+          "available": true
+        },
+        {
+          "date": "2026-01-13",
+          "time": "10:00 AM",
+          "available": true
+        },
+        {
+          "date": "2026-01-13",
+          "time": "3:00 PM",
+          "available": true
+        }
+      ],
+      "phone": "+91 98765 43213",
+      "email": "dr.vikram@mediverse.com"
     }
   ]
 }

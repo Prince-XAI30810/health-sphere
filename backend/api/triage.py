@@ -236,3 +236,22 @@ async def get_user_sessions(user_id: Optional[str] = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving sessions: {str(e)}")
 
+
+@router.delete("/session/{session_id}")
+async def delete_session(session_id: str):
+    """
+    Delete a triage session by session ID
+    """
+    try:
+        success = triage_agent.delete_session(session_id)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        return {"success": True, "message": "Session deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting session: {str(e)}")
+

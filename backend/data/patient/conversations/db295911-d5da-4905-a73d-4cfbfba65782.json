@@ -1,13 +1,13 @@
 {
-  "session_id": "750887d0-b311-4da1-bd54-5afd51ec8ce3",
+  "session_id": "db295911-d5da-4905-a73d-4cfbfba65782",
   "user_id": null,
-  "created_at": "2026-01-12T01:07:37.348750",
+  "created_at": "2026-01-12T02:02:17.837348",
   "messages": [
     {
       "id": 1,
       "type": "bot",
       "content": "Hello! I'm MediVerse's AI Health Assistant. I'm here to help assess your symptoms and guide you to the right care. Let's start by understanding your health concern. What health issue or symptom are you experiencing today?",
-      "timestamp": "2026-01-12T01:07:37.348750",
+      "timestamp": "2026-01-12T02:02:17.837367",
       "metadata": {
         "question_type": "issue",
         "collected_info": {
@@ -20,19 +20,19 @@
     {
       "id": 2,
       "type": "user",
-      "content": "Hii i am having leg pain ",
-      "timestamp": "2026-01-12T01:07:48.717908",
+      "content": "I have facing with body pain",
+      "timestamp": "2026-01-12T02:03:19.639871",
       "metadata": {}
     },
     {
       "id": 3,
       "type": "bot",
-      "content": "I'm sorry to hear that you're experiencing leg pain. On a scale of 1 to 10, how would you rate your pain or discomfort? (1 being very mild and 10 being extremely severe)",
-      "timestamp": "2026-01-12T01:07:48.722281",
+      "content": "On a scale of 1 to 10, how would you rate your pain or discomfort? (1 being very mild and 10 being extremely severe)",
+      "timestamp": "2026-01-12T02:03:19.649011",
       "metadata": {
         "question_type": "pain_rating",
         "collected_info": {
-          "issue": "leg pain",
+          "issue": "body pain",
           "pain_rating": null,
           "duration": null
         },
@@ -42,20 +42,20 @@
     {
       "id": 4,
       "type": "user",
-      "content": "10 ",
-      "timestamp": "2026-01-12T01:07:52.805841",
+      "content": "3",
+      "timestamp": "2026-01-12T02:03:23.206868",
       "metadata": {}
     },
     {
       "id": 5,
       "type": "bot",
-      "content": "Thank you for sharing that. How long have you been experiencing this leg pain? When did it start?",
-      "timestamp": "2026-01-12T01:07:52.805841",
+      "content": "How long have you been experiencing this? When did it start?",
+      "timestamp": "2026-01-12T02:03:23.212377",
       "metadata": {
         "question_type": "duration",
         "collected_info": {
-          "issue": "leg pain",
-          "pain_rating": 10,
+          "issue": "body pain",
+          "pain_rating": 3,
           "duration": null
         },
         "is_complete": false
@@ -64,21 +64,21 @@
     {
       "id": 6,
       "type": "user",
-      "content": "from past 2 days",
-      "timestamp": "2026-01-12T01:08:05.640557",
+      "content": "today",
+      "timestamp": "2026-01-12T02:03:32.119146",
       "metadata": {}
     },
     {
       "id": 7,
       "type": "bot",
       "content": "Based on your symptoms, I recommend consulting with Dr. Priya Patel, a General Physician.\n\n**Doctor Details:**\n- Name: Dr. Priya Patel\n- Specialty: General Physician\n- Qualifications: MBBS, MD (General Medicine)\n- Experience: 12 years\n- Rating: 4.8/5.0\n\n**Available Appointment Slots:**\n- 2026-01-12 at 10:00 AM\n- 2026-01-12 at 11:00 AM\n- 2026-01-12 at 2:00 PM\n",
-      "timestamp": "2026-01-12T01:08:05.640557",
+      "timestamp": "2026-01-12T02:03:32.124461",
       "metadata": {
         "question_type": null,
         "collected_info": {
-          "issue": "leg pain",
-          "pain_rating": 10,
-          "duration": "2 days"
+          "issue": "body pain",
+          "pain_rating": 3,
+          "duration": "today"
         },
         "is_complete": true,
         "recommended_doctor": {
@@ -122,9 +122,9 @@
     }
   ],
   "collected_info": {
-    "issue": "leg pain",
-    "pain_rating": 10,
-    "duration": "2 days"
+    "issue": "body pain",
+    "pain_rating": 3,
+    "duration": "today"
   },
   "status": "completed"
 }

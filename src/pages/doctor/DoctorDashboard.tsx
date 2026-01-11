@@ -64,21 +64,21 @@ interface QueuePatient {
   allergies?: string[];
   appointmentTime?: string;
   medicalHistory?: Array<{ date: string; diagnosis: string; doctor: string }>;
-  labReports?: Array<{ 
-    id: number; 
-    test: string; 
-    date: string; 
-    doctor: string; 
+  labReports?: Array<{
+    id: number;
+    test: string;
+    date: string;
+    doctor: string;
     status: string;
     aiInsights?: string[];
     results?: Record<string, { value: string; normal: string; unit?: string }>;
     lab?: string;
   }>;
-  prescriptions?: Array<{ 
-    id: number; 
-    date: string; 
-    doctor: string; 
-    diagnosis: string; 
+  prescriptions?: Array<{
+    id: number;
+    date: string;
+    doctor: string;
+    diagnosis: string;
     medications: string[];
     aiInsights?: string[];
     specialty?: string;
@@ -114,11 +114,11 @@ const patientQueue: QueuePatient[] = [
       { date: 'Aug 20, 2025', diagnosis: 'Routine Checkup', doctor: 'Dr. Priya Patel' },
     ],
     labReports: [
-      { 
-        id: 1, 
-        test: 'Complete Blood Count', 
-        date: 'Nov 10, 2025', 
-        doctor: 'Dr. Arjun Singh', 
+      {
+        id: 1,
+        test: 'Complete Blood Count',
+        date: 'Nov 10, 2025',
+        doctor: 'Dr. Arjun Singh',
         status: 'Normal',
         lab: 'City Health Lab',
         aiInsights: [
@@ -132,11 +132,11 @@ const patientQueue: QueuePatient[] = [
           'Platelets': { value: '250', normal: '150-450', unit: '×10³/µL' },
         }
       },
-      { 
-        id: 2, 
-        test: 'Lipid Profile', 
-        date: 'Oct 5, 2025', 
-        doctor: 'Dr. Arjun Singh', 
+      {
+        id: 2,
+        test: 'Lipid Profile',
+        date: 'Oct 5, 2025',
+        doctor: 'Dr. Arjun Singh',
         status: 'Borderline',
         lab: 'City Health Lab',
         aiInsights: [
@@ -152,11 +152,11 @@ const patientQueue: QueuePatient[] = [
       },
     ],
     prescriptions: [
-      { 
-        id: 1, 
-        date: 'Nov 15, 2025', 
-        doctor: 'Dr. Arjun Singh', 
-        diagnosis: 'Hypertension', 
+      {
+        id: 1,
+        date: 'Nov 15, 2025',
+        doctor: 'Dr. Arjun Singh',
+        diagnosis: 'Hypertension',
         specialty: 'Cardiologist',
         medications: ['Atorvastatin 20mg', 'Amlodipine 5mg'],
         additionalNotes: 'Follow dietary modifications. Regular exercise recommended.',
@@ -198,11 +198,11 @@ const patientQueue: QueuePatient[] = [
       { date: 'Oct 22, 2025', diagnosis: 'Routine Checkup', doctor: 'Dr. Priya Patel' },
     ],
     labReports: [
-      { 
-        id: 1, 
-        test: 'CBC', 
-        date: 'Dec 10, 2025', 
-        doctor: 'Dr. Arjun Singh', 
+      {
+        id: 1,
+        test: 'CBC',
+        date: 'Dec 10, 2025',
+        doctor: 'Dr. Arjun Singh',
         status: 'Normal',
         lab: 'City Health Lab',
         aiInsights: [
@@ -211,11 +211,11 @@ const patientQueue: QueuePatient[] = [
           'Patient responding well to treatment'
         ]
       },
-      { 
-        id: 2, 
-        test: 'Blood Culture', 
-        date: 'Dec 8, 2025', 
-        doctor: 'Dr. Arjun Singh', 
+      {
+        id: 2,
+        test: 'Blood Culture',
+        date: 'Dec 8, 2025',
+        doctor: 'Dr. Arjun Singh',
         status: 'Pending',
         lab: 'City Health Lab',
         aiInsights: [
@@ -226,11 +226,11 @@ const patientQueue: QueuePatient[] = [
       },
     ],
     prescriptions: [
-      { 
-        id: 1, 
-        date: 'Dec 15, 2025', 
-        doctor: 'Dr. Arjun Singh', 
-        diagnosis: 'Upper Respiratory Infection', 
+      {
+        id: 1,
+        date: 'Dec 15, 2025',
+        doctor: 'Dr. Arjun Singh',
+        diagnosis: 'Upper Respiratory Infection',
         specialty: 'General Physician',
         medications: ['Paracetamol 500mg', 'Cetirizine 10mg'],
         additionalNotes: 'Rest well and stay hydrated. If symptoms persist beyond 5 days, consult again.',
@@ -271,11 +271,11 @@ const patientQueue: QueuePatient[] = [
       { date: 'Sep 10, 2025', diagnosis: 'Routine Checkup', doctor: 'Dr. Priya Patel' },
     ],
     labReports: [
-      { 
-        id: 1, 
-        test: 'Routine Blood Work', 
-        date: 'Sep 5, 2025', 
-        doctor: 'Dr. Priya Patel', 
+      {
+        id: 1,
+        test: 'Routine Blood Work',
+        date: 'Sep 5, 2025',
+        doctor: 'Dr. Priya Patel',
         status: 'Normal',
         lab: 'City Health Lab',
         aiInsights: [
@@ -316,11 +316,11 @@ const patientQueue: QueuePatient[] = [
       { date: 'Oct 15, 2025', diagnosis: 'Diabetes Type 2', doctor: 'Dr. Priya Patel' },
     ],
     labReports: [
-      { 
-        id: 1, 
-        test: 'BP Monitoring', 
-        date: 'Dec 1, 2025', 
-        doctor: 'Dr. Arjun Singh', 
+      {
+        id: 1,
+        test: 'BP Monitoring',
+        date: 'Dec 1, 2025',
+        doctor: 'Dr. Arjun Singh',
         status: 'Normal',
         lab: 'City Health Lab',
         aiInsights: [
@@ -329,11 +329,11 @@ const patientQueue: QueuePatient[] = [
           'Continue monitoring at home'
         ]
       },
-      { 
-        id: 2, 
-        test: 'Blood Glucose', 
-        date: 'Nov 20, 2025', 
-        doctor: 'Dr. Priya Patel', 
+      {
+        id: 2,
+        test: 'Blood Glucose',
+        date: 'Nov 20, 2025',
+        doctor: 'Dr. Priya Patel',
         status: 'Normal',
         lab: 'City Health Lab',
         aiInsights: [
@@ -342,11 +342,11 @@ const patientQueue: QueuePatient[] = [
           'Maintain current treatment plan'
         ]
       },
-      { 
-        id: 3, 
-        test: 'HbA1c', 
-        date: 'Nov 20, 2025', 
-        doctor: 'Dr. Priya Patel', 
+      {
+        id: 3,
+        test: 'HbA1c',
+        date: 'Nov 20, 2025',
+        doctor: 'Dr. Priya Patel',
         status: 'Normal',
         lab: 'City Health Lab',
         aiInsights: [
@@ -357,11 +357,11 @@ const patientQueue: QueuePatient[] = [
       },
     ],
     prescriptions: [
-      { 
-        id: 1, 
-        date: 'Dec 5, 2025', 
-        doctor: 'Dr. Arjun Singh', 
-        diagnosis: 'Hypertension', 
+      {
+        id: 1,
+        date: 'Dec 5, 2025',
+        doctor: 'Dr. Arjun Singh',
+        diagnosis: 'Hypertension',
         specialty: 'Cardiologist',
         medications: ['Amlodipine 5mg', 'Metoprolol 25mg'],
         additionalNotes: 'Monitor BP regularly. Follow dietary restrictions.',
@@ -371,11 +371,11 @@ const patientQueue: QueuePatient[] = [
           'Monitor for side effects and adjust if needed'
         ]
       },
-      { 
-        id: 2, 
-        date: 'Oct 15, 2025', 
-        doctor: 'Dr. Priya Patel', 
-        diagnosis: 'Diabetes Type 2', 
+      {
+        id: 2,
+        date: 'Oct 15, 2025',
+        doctor: 'Dr. Priya Patel',
+        diagnosis: 'Diabetes Type 2',
         specialty: 'General Physician',
         medications: ['Metformin 500mg', 'Glimepiride 2mg'],
         additionalNotes: 'Monitor blood glucose. Follow diabetic diet.',
@@ -459,21 +459,21 @@ export const DoctorDashboard: React.FC = () => {
   useEffect(() => {
     const loadAppointments = async () => {
       if (!user || user.role !== 'doctor') return;
-      
+
       setIsLoadingAppointments(true);
       try {
         // Get doctor ID from user (assuming it's stored in user object or use email)
-        const doctorId = user.id || 'd1'; // Fallback to default doctor ID
-        
+        const doctorId = user.id || 'doc1'; // Fallback to default doctor ID
+
         // Fetch from patient queue instead
         const queueResponse = await fetch(`${API_BASE_URL}/api/appointments/queue/doctor/${doctorId}`);
         if (!queueResponse.ok) {
           throw new Error('Failed to load patient queue');
         }
-        
+
         const queueData = await queueResponse.json();
         const queuePatients = queueData.patients || [];
-        
+
         // Convert queue patients to appointment format for compatibility
         const convertedAppointments = queuePatients.map((patient: any) => ({
           appointment_id: patient.appointment_id,
@@ -490,9 +490,9 @@ export const DoctorDashboard: React.FC = () => {
           // Store queue data for display
           queue_data: patient
         }));
-        
+
         setAppointments(convertedAppointments);
-        
+
         // Store patient summaries from queue
         const summaries: Record<string, any> = {};
         queuePatients.forEach((patient: any) => {
@@ -502,7 +502,7 @@ export const DoctorDashboard: React.FC = () => {
             recommended_actions: patient.key_points || []
           };
         });
-        
+
         setPatientSummaries(summaries);
       } catch (error) {
         console.error('Error loading appointments:', error);
@@ -510,14 +510,14 @@ export const DoctorDashboard: React.FC = () => {
         setIsLoadingAppointments(false);
       }
     };
-    
+
     loadAppointments();
   }, [user]);
 
   const handlePatientClick = async (patient: QueuePatient) => {
     setSelectedPatient(patient);
     setIsSidebarOpen(true);
-    
+
     // Load patient summary if not already loaded
     if (patient.id && !patientSummaries[patient.id]) {
       try {
@@ -530,7 +530,7 @@ export const DoctorDashboard: React.FC = () => {
             patient_id: patient.id,
           }),
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setPatientSummaries(prev => ({
@@ -595,10 +595,10 @@ export const DoctorDashboard: React.FC = () => {
   // AI Chatbot function to answer questions about patients
   const handleChatbotQuery = async (query: string) => {
     const lowerQuery = query.toLowerCase();
-    
+
     // Patient search by name
     if (lowerQuery.includes('patient') || lowerQuery.includes('who')) {
-      const nameMatch = patientQueue.find(p => 
+      const nameMatch = patientQueue.find(p =>
         lowerQuery.includes(p.name.toLowerCase().split(' ')[0]) ||
         lowerQuery.includes(p.name.toLowerCase())
       );
@@ -624,7 +624,7 @@ export const DoctorDashboard: React.FC = () => {
 
     // Patient symptoms/complaints
     if (lowerQuery.includes('symptom') || lowerQuery.includes('complaint')) {
-      const symptomMatch = patientQueue.find(p => 
+      const symptomMatch = patientQueue.find(p =>
         lowerQuery.includes(p.chiefComplaint.toLowerCase().split(',')[0].split(' ')[0])
       );
       if (symptomMatch) {
@@ -826,14 +826,14 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                 const summary = patientSummaries[appointment.appointment_id];
                 // Get triage level from queue data or calculate from pain_rating
                 const queueData = appointment.queue_data || {};
-                const triageScore = queueData.triage_score || 
-                  (appointment.pain_rating 
+                const triageScore = queueData.triage_score ||
+                  (appointment.pain_rating
                     ? (parseInt(appointment.pain_rating) <= 3 ? 'low' : parseInt(appointment.pain_rating) <= 6 ? 'medium' : 'high')
                     : 'medium');
-                const triageLevel = (triageScore === 'high' || triageScore === 'medium' || triageScore === 'low') 
-                  ? triageScore 
+                const triageLevel = (triageScore === 'high' || triageScore === 'medium' || triageScore === 'low')
+                  ? triageScore
                   : 'medium';
-                
+
                 return (
                   <div
                     key={appointment.appointment_id}
@@ -849,13 +849,12 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                       phone: '',
                       appointmentTime: appointment.appointment_time,
                     } as QueuePatient)}
-                    className={`p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
-                      triageLevel === 'high'
+                    className={`p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${triageLevel === 'high'
                         ? 'border-destructive bg-destructive/5 hover:border-destructive/80'
                         : triageLevel === 'medium'
-                        ? 'border-warning bg-warning/5 hover:border-warning/80'
-                        : 'border-border hover:border-primary/50'
-                    }`}
+                          ? 'border-warning bg-warning/5 hover:border-warning/80'
+                          : 'border-border hover:border-primary/50'
+                      }`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -905,13 +904,12 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
             <div
               key={patient.id}
               onClick={() => handlePatientClick(patient)}
-              className={`p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
-                patient.triageLevel === 'high'
+              className={`p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${patient.triageLevel === 'high'
                   ? 'border-destructive bg-destructive/5 hover:border-destructive/80'
                   : patient.triageLevel === 'medium'
-                  ? 'border-warning bg-warning/5 hover:border-warning/80'
-                  : 'border-border hover:border-primary/50'
-              }`}
+                    ? 'border-warning bg-warning/5 hover:border-warning/80'
+                    : 'border-border hover:border-primary/50'
+                }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -963,7 +961,7 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                   </div>
                 </div>
               </SheetHeader>
-              
+
               {/* AI Patient Summary */}
               {(patientSummaries[selectedPatient.id] || appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data) && (
                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
@@ -972,25 +970,25 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                     <h4 className="font-semibold text-sm text-foreground">AI-Generated Patient Summary</h4>
                   </div>
                   <p className="text-sm text-muted-foreground whitespace-pre-line">
-                    {patientSummaries[selectedPatient.id]?.summary || 
-                     appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.summary ||
-                     'No summary available'}
+                    {patientSummaries[selectedPatient.id]?.summary ||
+                      appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.summary ||
+                      'No summary available'}
                   </p>
-                  {(patientSummaries[selectedPatient.id]?.recommended_actions || 
+                  {(patientSummaries[selectedPatient.id]?.recommended_actions ||
                     appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.key_points) && (
-                    <div className="mt-3 pt-3 border-t border-primary/20">
-                      <p className="text-xs font-medium text-foreground mb-2">Key Points:</p>
-                      <ul className="text-xs text-muted-foreground space-y-1">
-                        {(patientSummaries[selectedPatient.id]?.recommended_actions || 
-                          appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.key_points || []).map((point: string, idx: number) => (
-                          <li key={idx} className="flex gap-2">
-                            <span className="text-primary">•</span>
-                            <span>{point}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                      <div className="mt-3 pt-3 border-t border-primary/20">
+                        <p className="text-xs font-medium text-foreground mb-2">Key Points:</p>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          {(patientSummaries[selectedPatient.id]?.recommended_actions ||
+                            appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.key_points || []).map((point: string, idx: number) => (
+                              <li key={idx} className="flex gap-2">
+                                <span className="text-primary">•</span>
+                                <span>{point}</span>
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
                 </div>
               )}
 
@@ -1086,7 +1084,7 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                   <FileText className="w-5 h-5 text-secondary" />
                   <h3 className="text-lg font-semibold">Medical Records</h3>
                 </div>
-                
+
                 {/* Lab Test Reports */}
                 {selectedPatient.labReports && selectedPatient.labReports.length > 0 && (
                   <div className="space-y-3">
@@ -1192,14 +1190,14 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                     ))}
                   </div>
                 )}
-                
+
                 {(!selectedPatient.labReports || selectedPatient.labReports.length === 0) &&
-                 (!selectedPatient.prescriptions || selectedPatient.prescriptions.length === 0) &&
-                 (!patientSummaries[selectedPatient.id]?.medical_records || patientSummaries[selectedPatient.id].medical_records.length === 0) && (
-                  <p className="text-muted-foreground text-center py-4 border rounded-lg">
-                    No medical records available
-                  </p>
-                )}
+                  (!selectedPatient.prescriptions || selectedPatient.prescriptions.length === 0) &&
+                  (!patientSummaries[selectedPatient.id]?.medical_records || patientSummaries[selectedPatient.id].medical_records.length === 0) && (
+                    <p className="text-muted-foreground text-center py-4 border rounded-lg">
+                      No medical records available
+                    </p>
+                  )}
               </div>
 
               {/* Actions Section */}
@@ -1295,10 +1293,10 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
       {/* Lab Report PDF Viewer */}
       <Dialog open={!!selectedLabReport} onOpenChange={() => setSelectedLabReport(null)}>
         <DialogContent className="max-w-6xl max-h-[95vh] p-0">
-          <LabReportViewer 
-            report={selectedLabReport} 
+          <LabReportViewer
+            report={selectedLabReport}
             patientName={selectedPatient?.name || 'Patient'}
-            onClose={() => setSelectedLabReport(null)} 
+            onClose={() => setSelectedLabReport(null)}
           />
         </DialogContent>
       </Dialog>
@@ -1306,10 +1304,10 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
       {/* Prescription PDF Viewer */}
       <Dialog open={!!selectedPrescription} onOpenChange={() => setSelectedPrescription(null)}>
         <DialogContent className="max-w-6xl max-h-[95vh] p-0">
-          <PrescriptionViewer 
-            prescription={selectedPrescription} 
+          <PrescriptionViewer
+            prescription={selectedPrescription}
             patientName={selectedPatient?.name || 'Patient'}
-            onClose={() => setSelectedPrescription(null)} 
+            onClose={() => setSelectedPrescription(null)}
           />
         </DialogContent>
       </Dialog>
@@ -1330,9 +1328,8 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
 
       {/* Chatbot Panel */}
       {isChatbotOpen && (
-        <div className={`fixed bottom-6 right-6 w-96 bg-background border border-border rounded-2xl shadow-2xl z-50 flex flex-col transition-all ${
-          isChatbotMinimized ? 'h-16' : 'h-[600px]'
-        }`}>
+        <div className={`fixed bottom-6 right-6 w-96 bg-background border border-border rounded-2xl shadow-2xl z-50 flex flex-col transition-all ${isChatbotMinimized ? 'h-16' : 'h-[600px]'
+          }`}>
           {/* Chatbot Header */}
           <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-hero rounded-t-2xl">
             <div className="flex items-center gap-3">
@@ -1374,11 +1371,10 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                     className={`flex gap-3 ${message.type === 'user' ? 'flex-row-reverse' : ''}`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        message.type === 'user'
+                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-secondary text-secondary-foreground'
-                      }`}
+                        }`}
                     >
                       {message.type === 'user' ? (
                         <User className="w-4 h-4" />
@@ -1388,11 +1384,10 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                     </div>
                     <div className={`max-w-[80%] ${message.type === 'user' ? 'text-right' : ''}`}>
                       <div
-                        className={`inline-block p-3 rounded-xl text-sm ${
-                          message.type === 'user'
+                        className={`inline-block p-3 rounded-xl text-sm ${message.type === 'user'
                             ? 'bg-primary text-primary-foreground rounded-br-md'
                             : 'bg-muted rounded-bl-md'
-                        }`}
+                          }`}
                       >
                         {message.content}
                       </div>
@@ -1475,7 +1470,7 @@ const LabReportViewer: React.FC<{ report: any; patientName: string; onClose: () 
           </Button>
         </div>
       </DialogHeader>
-      
+
       <div className="relative w-full h-[calc(95vh-120px)] bg-muted/20">
         {pdfDataUrl ? (
           <iframe
@@ -1532,7 +1527,7 @@ const PrescriptionViewer: React.FC<{ prescription: any; patientName: string; onC
           </Button>
         </div>
       </DialogHeader>
-      
+
       <div className="relative w-full h-[calc(95vh-120px)] bg-muted/20">
         {pdfDataUrl ? (
           <iframe
@@ -1616,7 +1611,7 @@ const generateLabReportPDF = (report: any, patientName: string, returnDataUrl: b
     doc.setDrawColor(200, 200, 200);
     doc.line(10, yPos, 200, yPos);
     yPos += 8;
-    
+
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('TEST RESULTS', 10, yPos);
@@ -1624,14 +1619,14 @@ const generateLabReportPDF = (report: any, patientName: string, returnDataUrl: b
 
     doc.setFillColor(240, 240, 240);
     doc.rect(10, yPos - 5, 190, 8, 'F');
-    
+
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.text('Test Parameter', 12, yPos);
     doc.text('Result', 80, yPos);
     doc.text('Normal Range', 120, yPos);
     doc.text('Unit', 170, yPos);
-    
+
     yPos += 8;
     doc.setDrawColor(220, 220, 220);
     doc.line(10, yPos - 2, 200, yPos - 2);
@@ -1644,20 +1639,20 @@ const generateLabReportPDF = (report: any, patientName: string, returnDataUrl: b
         doc.addPage();
         yPos = 20;
       }
-      
+
       doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
       doc.text(key, 12, yPos);
-      
+
       const isNormal = report.status === 'Normal';
       doc.setTextColor(isNormal ? 34 : 255, isNormal ? 139 : 152, isNormal ? 34 : 0);
       doc.setFont('helvetica', 'bold');
       doc.text(value.value, 80, yPos);
       doc.setFont('helvetica', 'normal');
-      
+
       doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.text(value.normal, 120, yPos);
       doc.text(value.unit || '-', 170, yPos);
-      
+
       yPos += 7;
       doc.setDrawColor(240, 240, 240);
       doc.line(10, yPos - 2, 200, yPos - 2);

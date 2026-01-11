@@ -9,10 +9,10 @@
       "avatar": "RS"
     },
     {
-      "email": "doctor@mediverse.com",
+      "email": "dr.priyapatel@mediverse.com",
       "password": "doctor123",
       "role": "doctor",
-      "id": "d1",
+      "id": "doc1",
       "name": "Dr. Priya Patel",
       "avatar": "PP"
     },
@@ -23,7 +23,14 @@
       "id": "a1",
       "name": "Amit Kumar",
       "avatar": "AK"
+    },
+    {
+      "email": "dr.vikram@mediverse.com",
+      "password": "doctor123",
+      "role": "doctor",
+      "id": "doc4",
+      "name": "Dr. Vikram Singh",
+      "avatar": "VS"
     }
   ]
 }
-

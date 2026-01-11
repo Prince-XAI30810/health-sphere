@@ -417,4 +417,19 @@ Rules:
         except Exception as e:
             logger.error(f"Error getting all sessions: {e}", exc_info=True)
             return []
+    
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a triage session by session ID"""
+        try:
+            file_path = CONVERSATIONS_DIR / f"{session_id}.json"
+            if file_path.exists():
+                file_path.unlink()
+                logger.info(f"Deleted session: {session_id}")
+                return True
+            else:
+                logger.warning(f"Session not found for deletion: {session_id}")
+                return False
+        except Exception as e:
+            logger.error(f"Error deleting session {session_id}: {e}", exc_info=True)
+            return False
 

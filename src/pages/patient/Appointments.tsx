@@ -275,14 +275,14 @@ export const Appointments: React.FC = () => {
 
             try {
                 setIsLoading(true);
-                
+
                 // Fetch upcoming appointments
                 const upcomingResponse = await fetch(`${API_BASE_URL}/api/appointments/patient/${user.id}`);
                 if (!upcomingResponse.ok) {
                     throw new Error('Failed to fetch appointments');
                 }
                 const upcomingData = await upcomingResponse.json();
-                
+
                 // Fetch past appointments
                 let pastData = { appointments: [] };
                 try {
@@ -293,10 +293,10 @@ export const Appointments: React.FC = () => {
                 } catch (error) {
                     console.warn('Error fetching past appointments:', error);
                 }
-                
+
                 // Combine all appointments
                 const allAppointments = [...(upcomingData.appointments || []), ...(pastData.appointments || [])];
-                
+
                 // Convert backend appointments to frontend format
                 const convertedAppointments: Appointment[] = allAppointments.map((apt: any) => {
                     // Determine status
@@ -419,156 +419,153 @@ export const Appointments: React.FC = () => {
                         <div className="card-elevated divide-y divide-border">
                             {appointments.filter(apt => apt.status === 'upcoming' || apt.status === 'scheduled').length > 0 ? (
                                 appointments.filter(apt => apt.status === 'upcoming' || apt.status === 'scheduled').map((apt) => (
-                                <div
-                                    key={apt.id}
-                                    className="p-6 flex items-center justify-between hover:bg-muted/30 transition-colors"
-                                >
-                                    <div className="flex gap-4 items-center flex-1">
-                                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <User className="w-6 h-6 text-primary" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <h3 className="font-semibold text-foreground">{apt.doctor}</h3>
-                                                <Badge variant="outline" className="text-xs">
-                                                    {apt.specialty}
-                                                </Badge>
+                                    <div
+                                        key={apt.id}
+                                        className="p-6 flex items-center justify-between hover:bg-muted/30 transition-colors"
+                                    >
+                                        <div className="flex gap-4 items-center flex-1">
+                                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                                <User className="w-6 h-6 text-primary" />
                                             </div>
-                                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                <div className="flex items-center gap-1">
-                                                    <Calendar className="w-4 h-4" />
-                                                    <span>{apt.appointment_date || apt.date}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-3 mb-1">
+                                                    <h3 className="font-semibold text-foreground">{apt.doctor}</h3>
+                                                    <Badge variant="outline" className="text-xs">
+                                                        {apt.specialty}
+                                                    </Badge>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Clock className="w-4 h-4" />
-                                                    <span>{apt.appointment_time || apt.time}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    {apt.type === 'Video Consultation' ? (
-                                                        <Video className="w-4 h-4" />
-                                                    ) : (
-                                                        <Stethoscope className="w-4 h-4" />
-                                                    )}
-                                                    <span>{apt.type}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        {getStatusBadge(apt.status)}
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="outline" size="sm">
-                                                    <Info className="w-4 h-4 mr-1" />
-                                                    View Details
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-80" align="end">
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center gap-2 pb-2 border-b border-border">
-                                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                                            <User className="w-5 h-5 text-primary" />
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-semibold text-sm">{apt.doctor}</h4>
-                                                            <p className="text-xs text-muted-foreground">{apt.specialty}</p>
-                                                        </div>
+                                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                                    <div className="flex items-center gap-1">
+                                                        <Calendar className="w-4 h-4" />
+                                                        <span>{apt.appointment_date || apt.date}</span>
                                                     </div>
-
-                                                    <div className="space-y-3 text-sm">
-                                                        <div className="flex items-start gap-2">
-                                                            <Calendar className="w-4 h-4 text-primary mt-0.5" />
+                                                    <div className="flex items-center gap-1">
+                                                        <Clock className="w-4 h-4" />
+                                                        <span>{apt.appointment_time || apt.time}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        {apt.type === 'Video Consultation' ? (
+                                                            <Video className="w-4 h-4" />
+                                                        ) : (
+                                                            <Stethoscope className="w-4 h-4" />
+                                                        )}
+                                                        <span>{apt.type}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            {getStatusBadge(apt.status)}
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="outline" size="sm">
+                                                        <Info className="w-4 h-4 mr-1" />
+                                                        View Details
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-80" align="end">
+                                                    <div className="space-y-4">
+                                                        <div className="flex items-center gap-2 pb-2 border-b border-border">
+                                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                                                <User className="w-5 h-5 text-primary" />
+                                                            </div>
                                                             <div>
-                                                                <p className="font-medium">Date & Time</p>
-                                                                <p className="text-muted-foreground text-xs">{apt.appointment_date || apt.date} at {apt.appointment_time || apt.time}</p>
-                                                                {apt.duration && <p className="text-muted-foreground text-xs">Duration: {apt.duration}</p>}
+                                                                <h4 className="font-semibold text-sm">{apt.doctor}</h4>
+                                                                <p className="text-xs text-muted-foreground">{apt.specialty}</p>
                                                             </div>
                                                         </div>
 
-                                                        {apt.type === 'Video Consultation' ? (
+                                                        <div className="space-y-3 text-sm">
                                                             <div className="flex items-start gap-2">
-                                                                <Video className="w-4 h-4 text-primary mt-0.5" />
+                                                                <Calendar className="w-4 h-4 text-primary mt-0.5" />
                                                                 <div>
-                                                                    <p className="font-medium">Video Consultation</p>
-                                                                    <p className="text-muted-foreground text-xs">Join link will be shared 10 mins before</p>
+                                                                    <p className="font-medium">Date & Time</p>
+                                                                    <p className="text-muted-foreground text-xs">{apt.appointment_date || apt.date} at {apt.appointment_time || apt.time}</p>
+                                                                    {apt.duration && <p className="text-muted-foreground text-xs">Duration: {apt.duration}</p>}
                                                                 </div>
                                                             </div>
-                                                        ) : (
-                                                            <div className="flex items-start gap-2">
-                                                                <MapPin className="w-4 h-4 text-primary mt-0.5" />
-                                                                <div>
-                                                                    <p className="font-medium">Location</p>
-                                                                    <p className="text-muted-foreground text-xs">{apt.location}</p>
-                                                                </div>
-                                                            </div>
-                                                        )}
 
-                                                        {apt.contactNumber && (
-                                                            <div className="flex items-start gap-2">
-                                                                <Phone className="w-4 h-4 text-primary mt-0.5" />
-                                                                <div>
-                                                                    <p className="font-medium">Contact</p>
-                                                                    <p className="text-muted-foreground text-xs">{apt.contactNumber}</p>
+                                                            {apt.type === 'Video Consultation' ? (
+                                                                <div className="flex items-start gap-2">
+                                                                    <Video className="w-4 h-4 text-primary mt-0.5" />
+                                                                    <div>
+                                                                        <p className="font-medium">Video Consultation</p>
+                                                                        <p className="text-muted-foreground text-xs">Join link will be shared 10 mins before</p>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
-
-                                                        {apt.appointmentNotes && (
-                                                            <div className="flex items-start gap-2">
-                                                                <FileText className="w-4 h-4 text-primary mt-0.5" />
-                                                                <div>
-                                                                    <p className="font-medium">Appointment Notes</p>
-                                                                    <p className="text-muted-foreground text-xs">{apt.appointmentNotes}</p>
+                                                            ) : (
+                                                                <div className="flex items-start gap-2">
+                                                                    <MapPin className="w-4 h-4 text-primary mt-0.5" />
+                                                                    <div>
+                                                                        <p className="font-medium">Location</p>
+                                                                        <p className="text-muted-foreground text-xs">{apt.location}</p>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
+                                                            )}
 
-                                                        {apt.preparation && apt.preparation.length > 0 && (
-                                                            <div className="flex items-start gap-2">
-                                                                <ClipboardList className="w-4 h-4 text-primary mt-0.5" />
-                                                                <div>
-                                                                    <p className="font-medium">How to Prepare</p>
-                                                                    <ul className="text-muted-foreground text-xs space-y-1 mt-1">
-                                                                        {apt.preparation.map((item, idx) => (
-                                                                            <li key={idx} className="flex gap-1">
-                                                                                <span className="text-primary">•</span>
-                                                                                <span>{item}</span>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
+                                                            {apt.contactNumber && (
+                                                                <div className="flex items-start gap-2">
+                                                                    <Phone className="w-4 h-4 text-primary mt-0.5" />
+                                                                    <div>
+                                                                        <p className="font-medium">Contact</p>
+                                                                        <p className="text-muted-foreground text-xs">{apt.contactNumber}</p>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                            )}
 
-                                                    <div className="flex gap-2 pt-2 border-t border-border">
-                                                        {apt.type === 'Video Consultation' ? (
-                                                            <Button size="sm" className="flex-1" asChild>
-                                                                <Link to="/patient/telehealth">
-                                                                    <Video className="w-4 h-4 mr-1" />
-                                                                    Join Call
-                                                                </Link>
+
+
+                                                            {apt.preparation && apt.preparation.length > 0 && (
+                                                                <div className="flex items-start gap-2">
+                                                                    <ClipboardList className="w-4 h-4 text-primary mt-0.5" />
+                                                                    <div>
+                                                                        <p className="font-medium">How to Prepare</p>
+                                                                        <ul className="text-muted-foreground text-xs space-y-1 mt-1">
+                                                                            {apt.preparation.map((item, idx) => (
+                                                                                <li key={idx} className="flex gap-1">
+                                                                                    <span className="text-primary">•</span>
+                                                                                    <span>{item}</span>
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex gap-2 pt-2 border-t border-border">
+                                                            {apt.type === 'Video Consultation' ? (
+                                                                <Button size="sm" className="flex-1" asChild>
+                                                                    <Link to="/patient/telehealth" state={{
+                                                                        doctorName: apt.doctor,
+                                                                        specialty: apt.specialty,
+                                                                        appointmentDate: apt.appointment_date || apt.date,
+                                                                        appointmentTime: apt.appointment_time || apt.time
+                                                                    }}>
+                                                                        <Video className="w-4 h-4 mr-1" />
+                                                                        Join Call
+                                                                    </Link>
+                                                                </Button>
+                                                            ) : (
+                                                                <Button size="sm" className="flex-1">
+                                                                    <MapPin className="w-4 h-4 mr-1" />
+                                                                    Get Directions
+                                                                </Button>
+                                                            )}
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleRescheduleClick(apt)}
+                                                            >
+                                                                <CalendarDays className="w-4 h-4 mr-1" />
+                                                                Reschedule
                                                             </Button>
-                                                        ) : (
-                                                            <Button size="sm" className="flex-1">
-                                                                <MapPin className="w-4 h-4 mr-1" />
-                                                                Get Directions
-                                                            </Button>
-                                                        )}
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleRescheduleClick(apt)}
-                                                        >
-                                                            <CalendarDays className="w-4 h-4 mr-1" />
-                                                            Reschedule
-                                                        </Button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </PopoverContent>
-                                        </Popover>
+                                                </PopoverContent>
+                                            </Popover>
+                                        </div>
                                     </div>
-                                </div>
                                 ))
                             ) : (
                                 <div className="p-8 text-center text-muted-foreground">
@@ -590,71 +587,71 @@ export const Appointments: React.FC = () => {
                         <div className="card-elevated divide-y divide-border">
                             {appointments.filter(apt => apt.status === 'completed' || apt.status === 'cancelled').length > 0 ? (
                                 appointments.filter(apt => apt.status === 'completed' || apt.status === 'cancelled').map((apt) => (
-                            <div
-                                key={apt.id}
-                                className="p-6 hover:bg-muted/30 transition-colors"
-                            >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex gap-4 items-start flex-1">
-                                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                                            <User className="w-6 h-6 text-muted-foreground" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <h3 className="font-semibold text-foreground">{apt.doctor}</h3>
-                                                <Badge variant="outline" className="text-xs">
-                                                    {apt.specialty}
-                                                </Badge>
-                                                {getStatusIcon(apt.status)}
-                                            </div>
-                                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                                                <div className="flex items-center gap-1">
-                                                    <Calendar className="w-4 h-4" />
-                                                    <span>{apt.appointment_date || apt.date}</span>
+                                    <div
+                                        key={apt.id}
+                                        className="p-6 hover:bg-muted/30 transition-colors"
+                                    >
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex gap-4 items-start flex-1">
+                                                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                                    <User className="w-6 h-6 text-muted-foreground" />
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Clock className="w-4 h-4" />
-                                                    <span>{apt.appointment_time || apt.time}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    {apt.type === 'Video Consultation' ? (
-                                                        <Video className="w-4 h-4" />
-                                                    ) : (
-                                                        <Stethoscope className="w-4 h-4" />
-                                                    )}
-                                                    <span>{apt.type}</span>
-                                                </div>
-                                            </div>
-                                            {apt.diagnosis && (
-                                                <div className="mb-3">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <FileText className="w-4 h-4 text-primary" />
-                                                        <span className="text-sm font-medium text-foreground">Diagnosis:</span>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <h3 className="font-semibold text-foreground">{apt.doctor}</h3>
+                                                        <Badge variant="outline" className="text-xs">
+                                                            {apt.specialty}
+                                                        </Badge>
+                                                        {getStatusIcon(apt.status)}
                                                     </div>
-                                                    <p className="text-sm text-muted-foreground ml-6">{apt.diagnosis}</p>
+                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                                                        <div className="flex items-center gap-1">
+                                                            <Calendar className="w-4 h-4" />
+                                                            <span>{apt.appointment_date || apt.date}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Clock className="w-4 h-4" />
+                                                            <span>{apt.appointment_time || apt.time}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            {apt.type === 'Video Consultation' ? (
+                                                                <Video className="w-4 h-4" />
+                                                            ) : (
+                                                                <Stethoscope className="w-4 h-4" />
+                                                            )}
+                                                            <span>{apt.type}</span>
+                                                        </div>
+                                                    </div>
+                                                    {apt.diagnosis && (
+                                                        <div className="mb-3">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <FileText className="w-4 h-4 text-primary" />
+                                                                <span className="text-sm font-medium text-foreground">Diagnosis:</span>
+                                                            </div>
+                                                            <p className="text-sm text-muted-foreground ml-6">{apt.diagnosis}</p>
+                                                        </div>
+                                                    )}
+                                                    {apt.doctorNotes && (
+                                                        <div className="bg-muted/50 p-3 rounded-lg mb-3">
+                                                            <p className="text-sm text-foreground">
+                                                                <span className="font-medium">Doctor's Notes: </span>
+                                                                {apt.doctorNotes}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                            {apt.doctorNotes && (
-                                                <div className="bg-muted/50 p-3 rounded-lg mb-3">
-                                                    <p className="text-sm text-foreground">
-                                                        <span className="font-medium">Doctor's Notes: </span>
-                                                        {apt.doctorNotes}
-                                                    </p>
-                                                </div>
-                                            )}
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                {getStatusBadge(apt.status)}
+                                                {apt.aiSummary && apt.status === 'completed' && (
+                                                    <AIInsightPopover
+                                                        insights={apt.aiSummary}
+                                                        triggerText="AI Summary"
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        {getStatusBadge(apt.status)}
-                                        {apt.aiSummary && apt.status === 'completed' && (
-                                            <AIInsightPopover
-                                                insights={apt.aiSummary}
-                                                triggerText="AI Summary"
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
                                 ))
                             ) : (
                                 <div className="p-8 text-center text-muted-foreground">
@@ -712,10 +709,10 @@ export const Appointments: React.FC = () => {
                                                     disabled={!slot.available}
                                                     onClick={() => handleSlotSelect(day.date, slot.time)}
                                                     className={`${!slot.available
-                                                            ? 'opacity-50 cursor-not-allowed line-through'
-                                                            : selectedSlot?.date === day.date && selectedSlot?.time === slot.time
-                                                                ? 'bg-primary text-primary-foreground'
-                                                                : 'hover:bg-primary/10 hover:border-primary'
+                                                        ? 'opacity-50 cursor-not-allowed line-through'
+                                                        : selectedSlot?.date === day.date && selectedSlot?.time === slot.time
+                                                            ? 'bg-primary text-primary-foreground'
+                                                            : 'hover:bg-primary/10 hover:border-primary'
                                                         }`}
                                                 >
                                                     <Clock className="w-3 h-3 mr-1" />

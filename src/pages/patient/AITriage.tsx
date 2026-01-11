@@ -28,6 +28,7 @@ import {
   MessageSquare,
   Mic,
   MicOff,
+  Trash2,
 } from 'lucide-react';
 
 interface Message {
@@ -101,21 +102,54 @@ export const AITriage: React.FC = () => {
     }
   };
 
+  const deleteSession = async (sessionIdToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering session click
+
+    if (!confirm('Are you sure you want to delete this session?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/triage/session/${sessionIdToDelete}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete session');
+      }
+
+      // Remove from local state
+      setPreviousSessions(prev => prev.filter(s => s.session_id !== sessionIdToDelete));
+
+      // If deleted session was selected, clear selection
+      if (selectedSession === sessionIdToDelete) {
+        setSelectedSession(null);
+        // Start a new session
+        startNewSession();
+      }
+
+      toast.success('Session deleted successfully');
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast.error('Failed to delete session');
+    }
+  };
+
   const handleSessionClick = async (session: TriageSession) => {
     setSelectedSession(session.session_id);
     setSessionId(session.session_id);
     setInput('');
     setIsTyping(true); // Show loading state
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/triage/conversation/${session.session_id}`);
       if (!response.ok) {
         throw new Error('Failed to load conversation');
       }
       const data = await response.json();
-      
+
       console.log('Loaded conversation data:', data);
-      
+
       // Check if messages exist
       if (!data.messages || data.messages.length === 0) {
         console.warn('No messages found in conversation');
@@ -123,7 +157,7 @@ export const AITriage: React.FC = () => {
         setIsTyping(false);
         return;
       }
-      
+
       // Convert backend messages to frontend format
       const convertedMessages: Message[] = data.messages.map((msg: any) => {
         const message: Message = {
@@ -132,13 +166,13 @@ export const AITriage: React.FC = () => {
           content: msg.content || '',
           timestamp: new Date(msg.timestamp),
         };
-        
+
         // Extract metadata
         if (msg.metadata) {
           const metadata = msg.metadata;
           const collectedInfo = metadata.collected_info || {};
           const painRating = collectedInfo.pain_rating;
-          
+
           // Convert pain rating (1-10) to triage level
           if (painRating) {
             try {
@@ -164,17 +198,17 @@ export const AITriage: React.FC = () => {
               }
             }
           }
-          
+
           if (metadata.recommended_doctor) {
             message.recommendedDoctor = metadata.recommended_doctor;
           }
         }
-        
+
         return message;
       });
-      
+
       console.log('Converted messages:', convertedMessages);
-      
+
       // Ensure we have at least one message
       if (convertedMessages.length === 0) {
         console.warn('No messages to display after conversion');
@@ -220,7 +254,7 @@ export const AITriage: React.FC = () => {
 
       const data = await response.json();
       setSessionId(data.session_id);
-      
+
       const initialMessage: Message = {
         id: 1,
         type: 'bot',
@@ -369,7 +403,7 @@ export const AITriage: React.FC = () => {
         triageLevel,
         recommendedDoctor: data.recommended_doctor || null,
       };
-      
+
       console.log('Bot message with recommended doctor:', {
         hasDoctor: !!botMessage.recommendedDoctor,
         doctor: botMessage.recommendedDoctor,
@@ -377,7 +411,7 @@ export const AITriage: React.FC = () => {
       });
 
       setMessages((prev) => [...prev, botMessage]);
-      
+
       // Reload sessions to update the list
       await loadPreviousSessions();
     } catch (error) {
@@ -456,7 +490,7 @@ export const AITriage: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="AI Symptom Checker"
+      title="AI Triage"
       subtitle="Describe your symptoms for an AI-powered health assessment"
     >
       <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-10rem)]">
@@ -492,7 +526,7 @@ export const AITriage: React.FC = () => {
                   });
                   const isToday = sessionDate.toDateString() === new Date().toDateString();
                   const displayDate = isToday ? `Today, ${formattedTime}` : `${formattedDate}, ${formattedTime}`;
-                  
+
                   return (
                     <div
                       key={session.session_id}
@@ -503,10 +537,20 @@ export const AITriage: React.FC = () => {
                         }`}
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <span className="font-medium text-foreground text-sm truncate">
+                        <span className="font-medium text-foreground text-sm truncate flex-1">
                           {session.symptom || 'No symptom recorded'}
                         </span>
-                        {session.triage_level && getTriageIcon(session.triage_level)}
+                        <div className="flex items-center gap-1">
+                          {session.triage_level && getTriageIcon(session.triage_level)}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                            onClick={(e) => deleteSession(session.session_id, e)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
@@ -514,7 +558,7 @@ export const AITriage: React.FC = () => {
                       </div>
                       {session.recommended_doctor && (
                         <div className="text-xs text-muted-foreground mt-1 truncate">
-                          Dr. {session.recommended_doctor}
+                          {session.recommended_doctor}
                         </div>
                       )}
                     </div>
@@ -549,276 +593,276 @@ export const AITriage: React.FC = () => {
             ) : (
               <>
                 {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 animate-slide-up ${message.type === 'user' ? 'flex-row-reverse' : ''
-                  }`}
-              >
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-secondary-foreground'
-                    }`}
-                >
-                  {message.type === 'user' ? (
-                    <User className="w-5 h-5" />
-                  ) : (
-                    <Bot className="w-5 h-5" />
-                  )}
-                </div>
-                <div
-                  className={`max-w-[85%] lg:max-w-[75%] ${message.type === 'user' ? 'text-right' : ''
-                    }`}
-                >
                   <div
-                    className={`inline-block p-4 rounded-2xl ${message.type === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-br-md'
-                      : 'bg-card border border-border rounded-bl-md shadow-sm'
+                    key={message.id}
+                    className={`flex gap-3 animate-slide-up ${message.type === 'user' ? 'flex-row-reverse' : ''
                       }`}
                   >
-                    {message.triageLevel && (
-                      <div className="flex items-center gap-2 mb-3">
-                        {getTriageIcon(message.triageLevel)}
-                        {getTriageBadge(message.triageLevel)}
-                      </div>
-                    )}
-                    {message.type === 'bot' ? (
-                      <div className="text-sm prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-strong:font-semibold prose-strong:text-foreground">
-                        <ReactMarkdown
-                          components={{
-                            p: ({ children }) => <p className="mb-2 last:mb-0 text-foreground">{children}</p>,
-                            strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                            ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1 text-foreground">{children}</ul>,
-                            ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1 text-foreground">{children}</ol>,
-                            li: ({ children }) => <li className="text-foreground">{children}</li>,
-                            h1: ({ children }) => <h1 className="text-lg font-semibold mb-2 text-foreground">{children}</h1>,
-                            h2: ({ children }) => <h2 className="text-base font-semibold mb-2 text-foreground">{children}</h2>,
-                            h3: ({ children }) => <h3 className="text-sm font-semibold mb-2 text-foreground">{children}</h3>,
-                            code: ({ children }) => <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono text-foreground">{children}</code>,
-                            pre: ({ children }) => <pre className="bg-muted p-2 rounded text-xs overflow-x-auto mb-2">{children}</pre>,
-                          }}
-                        >
-                          {message.content}
-                        </ReactMarkdown>
-                      </div>
-                    ) : (
-                      <p className="text-sm whitespace-pre-line text-left">{message.content}</p>
-                    )}
-                    {message.recommendedDoctor && (
-                      <div className="mt-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
-                        <h4 className="font-semibold text-sm mb-3 text-foreground">Recommended Doctor</h4>
-                        <div className="space-y-2 text-sm">
-                          <div>
-                            <span className="font-medium">Dr. {message.recommendedDoctor.name}</span>
-                            <span className="text-muted-foreground ml-2">({message.recommendedDoctor.specialty})</span>
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary text-secondary-foreground'
+                        }`}
+                    >
+                      {message.type === 'user' ? (
+                        <User className="w-5 h-5" />
+                      ) : (
+                        <Bot className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div
+                      className={`max-w-[85%] lg:max-w-[75%] ${message.type === 'user' ? 'text-right' : ''
+                        }`}
+                    >
+                      <div
+                        className={`inline-block p-4 rounded-2xl ${message.type === 'user'
+                          ? 'bg-primary text-primary-foreground rounded-br-md'
+                          : 'bg-card border border-border rounded-bl-md shadow-sm'
+                          }`}
+                      >
+                        {message.triageLevel && (
+                          <div className="flex items-center gap-2 mb-3">
+                            {getTriageIcon(message.triageLevel)}
+                            {getTriageBadge(message.triageLevel)}
                           </div>
-                          <div className="text-muted-foreground">
-                            {message.recommendedDoctor.qualifications}
+                        )}
+                        {message.type === 'bot' ? (
+                          <div className="text-sm prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-strong:font-semibold prose-strong:text-foreground">
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => <p className="mb-2 last:mb-0 text-foreground">{children}</p>,
+                                strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                                ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1 text-foreground">{children}</ul>,
+                                ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1 text-foreground">{children}</ol>,
+                                li: ({ children }) => <li className="text-foreground">{children}</li>,
+                                h1: ({ children }) => <h1 className="text-lg font-semibold mb-2 text-foreground">{children}</h1>,
+                                h2: ({ children }) => <h2 className="text-base font-semibold mb-2 text-foreground">{children}</h2>,
+                                h3: ({ children }) => <h3 className="text-sm font-semibold mb-2 text-foreground">{children}</h3>,
+                                code: ({ children }) => <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono text-foreground">{children}</code>,
+                                pre: ({ children }) => <pre className="bg-muted p-2 rounded text-xs overflow-x-auto mb-2">{children}</pre>,
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
                           </div>
-                          <div className="text-muted-foreground">
-                            Experience: {message.recommendedDoctor.experience} • Rating: {message.recommendedDoctor.rating}/5.0
-                          </div>
-                          <div className="mt-3">
-                            <p className="font-medium text-xs mb-2 text-foreground">Available Slots:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {message.recommendedDoctor.available_slots
-                                .filter(slot => slot.available)
-                                .slice(0, 3)
-                                .map((slot, idx) => {
-                                  const isSelected = selectedSlot?.date === slot.date && 
-                                                    selectedSlot?.time === slot.time && 
-                                                    selectedSlot?.doctorId === message.recommendedDoctor.id;
-                                  return (
-                                    <Button
-                                      key={idx}
-                                      type="button"
-                                      size="sm"
-                                      variant={isSelected ? "default" : "outline"}
-                                      className={`text-xs ${isSelected ? 'bg-primary text-primary-foreground' : ''}`}
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        
-                                        if (!message.recommendedDoctor || !user) {
-                                          toast.error('Please login to schedule an appointment');
-                                          return;
-                                        }
-                                        
-                                        // Select the slot
-                                        setSelectedSlot({
-                                          date: slot.date,
-                                          time: slot.time,
-                                          doctorId: message.recommendedDoctor.id
-                                        });
-                                        setSelectedDoctor(message.recommendedDoctor);
-                                      }}
-                                    >
-                                      <Calendar className="w-3 h-3 mr-1" />
-                                      {slot.date} {slot.time}
-                                    </Button>
-                                  );
-                                })}
-                            </div>
-                            {selectedSlot && selectedSlot.doctorId === message.recommendedDoctor.id && (
-                              <div className="mt-2 p-2 bg-primary/10 rounded-lg border border-primary/20">
-                                <p className="text-xs font-medium text-primary">
-                                  ✓ Selected: {selectedSlot.date} at {selectedSlot.time}
-                                </p>
+                        ) : (
+                          <p className="text-sm whitespace-pre-line text-left">{message.content}</p>
+                        )}
+                        {message.recommendedDoctor && (
+                          <div className="mt-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
+                            <h4 className="font-semibold text-sm mb-3 text-foreground">Recommended Doctor</h4>
+                            <div className="space-y-2 text-sm">
+                              <div>
+                                <span className="font-medium">{message.recommendedDoctor.name}</span>
+                                <span className="text-muted-foreground ml-2">({message.recommendedDoctor.specialty})</span>
                               </div>
-                            )}
-                          </div>
-                          <Button
-                            type="button"
-                            className="w-full mt-3 cursor-pointer"
-                            size="sm"
-                            disabled={!message.recommendedDoctor || !user || !selectedSlot || selectedSlot.doctorId !== message.recommendedDoctor.id}
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              
-                              if (!message.recommendedDoctor) {
-                                toast.error('Doctor information not available');
-                                return;
-                              }
-                              
-                              if (!user) {
-                                toast.error('Please login to schedule an appointment');
-                                return;
-                              }
-                              
-                              if (!selectedSlot || selectedSlot.doctorId !== message.recommendedDoctor.id) {
-                                toast.error('Please select a time slot first');
-                                return;
-                              }
-                              
-                              try {
-                                // Get collected info from conversation for better symptom extraction
-                                let symptoms = '';
-                                let painRating = null;
-                                try {
-                                  const conversation = await fetch(`${API_BASE_URL}/api/triage/conversation/${sessionId}`).then(r => r.json());
-                                  const collectedInfo = conversation.collected_info || {};
-                                  symptoms = collectedInfo.issue || messages.find(m => m.type === 'user')?.content || '';
-                                  painRating = collectedInfo.pain_rating || null;
-                                } catch (e) {
-                                  symptoms = messages.find(m => m.type === 'user')?.content || '';
-                                }
-                                
-                                const requestBody = {
-                                  patient_id: user.id || '',
-                                  patient_name: user.name || '',
-                                  patient_email: user.email || '',
-                                  doctor_id: message.recommendedDoctor.id || '',
-                                  doctor_name: message.recommendedDoctor.name || '',
-                                  appointment_date: selectedSlot.date || '',
-                                  appointment_time: selectedSlot.time || '',
-                                  reason: 'Appointment notes will be generated automatically', // Backend will generate proper notes
-                                  triage_session_id: sessionId || null,
-                                  symptoms: symptoms || null,
-                                  pain_rating: painRating !== null && painRating !== undefined ? String(painRating) : null,
-                                };
-                                
-                                console.log('Scheduling appointment with:', requestBody);
-                                
-                                const response = await fetch(`${API_BASE_URL}/api/appointments/schedule`, {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                  body: JSON.stringify(requestBody),
-                                });
-                                
-                                if (!response.ok) {
-                                  let errorMessage = 'Failed to schedule appointment';
-                                  try {
-                                    const errorData = await response.json();
-                                    // Handle different error response formats
-                                    if (errorData.detail) {
-                                      errorMessage = typeof errorData.detail === 'string' 
-                                        ? errorData.detail 
-                                        : JSON.stringify(errorData.detail);
-                                    } else if (errorData.message) {
-                                      errorMessage = typeof errorData.message === 'string'
-                                        ? errorData.message
-                                        : JSON.stringify(errorData.message);
-                                    } else if (typeof errorData === 'string') {
-                                      errorMessage = errorData;
-                                    } else {
-                                      errorMessage = JSON.stringify(errorData);
-                                    }
-                                  } catch (parseError) {
-                                    // If response is not JSON, try to get text
-                                    try {
-                                      const text = await response.text();
-                                      errorMessage = text || `HTTP ${response.status}: ${response.statusText}`;
-                                    } catch (textError) {
-                                      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                                    }
+                              <div className="text-muted-foreground">
+                                {message.recommendedDoctor.qualifications}
+                              </div>
+                              <div className="text-muted-foreground">
+                                Experience: {message.recommendedDoctor.experience} • Rating: {message.recommendedDoctor.rating}/5.0
+                              </div>
+                              <div className="mt-3">
+                                <p className="font-medium text-xs mb-2 text-foreground">Available Slots:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {message.recommendedDoctor.available_slots
+                                    .filter(slot => slot.available)
+                                    .slice(0, 3)
+                                    .map((slot, idx) => {
+                                      const isSelected = selectedSlot?.date === slot.date &&
+                                        selectedSlot?.time === slot.time &&
+                                        selectedSlot?.doctorId === message.recommendedDoctor.id;
+                                      return (
+                                        <Button
+                                          key={idx}
+                                          type="button"
+                                          size="sm"
+                                          variant={isSelected ? "default" : "outline"}
+                                          className={`text-xs ${isSelected ? 'bg-primary text-primary-foreground' : ''}`}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+
+                                            if (!message.recommendedDoctor || !user) {
+                                              toast.error('Please login to schedule an appointment');
+                                              return;
+                                            }
+
+                                            // Select the slot
+                                            setSelectedSlot({
+                                              date: slot.date,
+                                              time: slot.time,
+                                              doctorId: message.recommendedDoctor.id
+                                            });
+                                            setSelectedDoctor(message.recommendedDoctor);
+                                          }}
+                                        >
+                                          <Calendar className="w-3 h-3 mr-1" />
+                                          {slot.date} {slot.time}
+                                        </Button>
+                                      );
+                                    })}
+                                </div>
+                                {selectedSlot && selectedSlot.doctorId === message.recommendedDoctor.id && (
+                                  <div className="mt-2 p-2 bg-primary/10 rounded-lg border border-primary/20">
+                                    <p className="text-xs font-medium text-primary">
+                                      ✓ Selected: {selectedSlot.date} at {selectedSlot.time}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                              <Button
+                                type="button"
+                                className="w-full mt-3 cursor-pointer"
+                                size="sm"
+                                disabled={!message.recommendedDoctor || !user || !selectedSlot || selectedSlot.doctorId !== message.recommendedDoctor.id}
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+
+                                  if (!message.recommendedDoctor) {
+                                    toast.error('Doctor information not available');
+                                    return;
                                   }
-                                  throw new Error(errorMessage);
-                                }
-                                
-                                const data = await response.json();
-                                toast.success('Appointment scheduled successfully!', {
-                                  description: `Appointment with ${message.recommendedDoctor.name} on ${selectedSlot.date} at ${selectedSlot.time}`,
-                                });
-                                
-                                // Clear selected slot and doctor
-                                setSelectedSlot(null);
-                                setSelectedDoctor(null);
-                                
-                                // Optionally refresh or update UI
-                                console.log('Appointment scheduled:', data);
-                              } catch (error) {
-                                console.error('Error scheduling appointment:', error);
-                                let errorMessage = 'Failed to schedule appointment';
-                                if (error instanceof Error) {
-                                  errorMessage = error.message;
-                                } else if (typeof error === 'string') {
-                                  errorMessage = error;
-                                } else {
-                                  errorMessage = JSON.stringify(error);
-                                }
-                                toast.error('Failed to schedule appointment', {
-                                  description: errorMessage,
-                                });
-                              }
-                            }}
-                          >
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Schedule Appointment
-                          </Button>
-                        </div>
+
+                                  if (!user) {
+                                    toast.error('Please login to schedule an appointment');
+                                    return;
+                                  }
+
+                                  if (!selectedSlot || selectedSlot.doctorId !== message.recommendedDoctor.id) {
+                                    toast.error('Please select a time slot first');
+                                    return;
+                                  }
+
+                                  try {
+                                    // Get collected info from conversation for better symptom extraction
+                                    let symptoms = '';
+                                    let painRating = null;
+                                    try {
+                                      const conversation = await fetch(`${API_BASE_URL}/api/triage/conversation/${sessionId}`).then(r => r.json());
+                                      const collectedInfo = conversation.collected_info || {};
+                                      symptoms = collectedInfo.issue || messages.find(m => m.type === 'user')?.content || '';
+                                      painRating = collectedInfo.pain_rating || null;
+                                    } catch (e) {
+                                      symptoms = messages.find(m => m.type === 'user')?.content || '';
+                                    }
+
+                                    const requestBody = {
+                                      patient_id: user.id || '',
+                                      patient_name: user.name || '',
+                                      patient_email: user.email || '',
+                                      doctor_id: message.recommendedDoctor.id || '',
+                                      doctor_name: message.recommendedDoctor.name || '',
+                                      appointment_date: selectedSlot.date || '',
+                                      appointment_time: selectedSlot.time || '',
+                                      reason: 'Appointment notes will be generated automatically', // Backend will generate proper notes
+                                      triage_session_id: sessionId || null,
+                                      symptoms: symptoms || null,
+                                      pain_rating: painRating !== null && painRating !== undefined ? String(painRating) : null,
+                                    };
+
+                                    console.log('Scheduling appointment with:', requestBody);
+
+                                    const response = await fetch(`${API_BASE_URL}/api/appointments/schedule`, {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: JSON.stringify(requestBody),
+                                    });
+
+                                    if (!response.ok) {
+                                      let errorMessage = 'Failed to schedule appointment';
+                                      try {
+                                        const errorData = await response.json();
+                                        // Handle different error response formats
+                                        if (errorData.detail) {
+                                          errorMessage = typeof errorData.detail === 'string'
+                                            ? errorData.detail
+                                            : JSON.stringify(errorData.detail);
+                                        } else if (errorData.message) {
+                                          errorMessage = typeof errorData.message === 'string'
+                                            ? errorData.message
+                                            : JSON.stringify(errorData.message);
+                                        } else if (typeof errorData === 'string') {
+                                          errorMessage = errorData;
+                                        } else {
+                                          errorMessage = JSON.stringify(errorData);
+                                        }
+                                      } catch (parseError) {
+                                        // If response is not JSON, try to get text
+                                        try {
+                                          const text = await response.text();
+                                          errorMessage = text || `HTTP ${response.status}: ${response.statusText}`;
+                                        } catch (textError) {
+                                          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                                        }
+                                      }
+                                      throw new Error(errorMessage);
+                                    }
+
+                                    const data = await response.json();
+                                    toast.success('Appointment scheduled successfully!', {
+                                      description: `Appointment with ${message.recommendedDoctor.name} on ${selectedSlot.date} at ${selectedSlot.time}`,
+                                    });
+
+                                    // Clear selected slot and doctor
+                                    setSelectedSlot(null);
+                                    setSelectedDoctor(null);
+
+                                    // Optionally refresh or update UI
+                                    console.log('Appointment scheduled:', data);
+                                  } catch (error) {
+                                    console.error('Error scheduling appointment:', error);
+                                    let errorMessage = 'Failed to schedule appointment';
+                                    if (error instanceof Error) {
+                                      errorMessage = error.message;
+                                    } else if (typeof error === 'string') {
+                                      errorMessage = error;
+                                    } else {
+                                      errorMessage = JSON.stringify(error);
+                                    }
+                                    toast.error('Failed to schedule appointment', {
+                                      description: errorMessage,
+                                    });
+                                  }
+                                }}
+                              >
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Schedule Appointment
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        {message.suggestions && (
+                          <div className="flex flex-wrap gap-2 mt-4 text-left">
+                            {message.suggestions.map((suggestion, idx) => (
+                              <Button
+                                key={idx}
+                                size="sm"
+                                variant={idx === 0 && message.triageLevel === 'high' ? 'destructive' : 'outline'}
+                                className="text-xs"
+                              >
+                                {idx === 0 && message.triageLevel === 'high' ? (
+                                  <Phone className="w-3 h-3 mr-1" />
+                                ) : (
+                                  <Calendar className="w-3 h-3 mr-1" />
+                                )}
+                                {suggestion}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {message.suggestions && (
-                      <div className="flex flex-wrap gap-2 mt-4 text-left">
-                        {message.suggestions.map((suggestion, idx) => (
-                          <Button
-                            key={idx}
-                            size="sm"
-                            variant={idx === 0 && message.triageLevel === 'high' ? 'destructive' : 'outline'}
-                            className="text-xs"
-                          >
-                            {idx === 0 && message.triageLevel === 'high' ? (
-                              <Phone className="w-3 h-3 mr-1" />
-                            ) : (
-                              <Calendar className="w-3 h-3 mr-1" />
-                            )}
-                            {suggestion}
-                          </Button>
-                        ))}
-                      </div>
-                    )}
+                      <p className="text-xs text-muted-foreground mt-1 px-1">
+                        {message.timestamp.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1 px-1">
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
-              </div>
                 ))}
               </>
             )}
@@ -898,13 +942,13 @@ export const AITriage: React.FC = () => {
               Please review your appointment details before confirming
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedDoctor && selectedSlot && user && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Doctor:</span>
-                  <span className="text-sm font-medium">Dr. {selectedDoctor.name}</span>
+                  <span className="text-sm font-medium">{selectedDoctor.name}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Specialty:</span>
@@ -925,7 +969,7 @@ export const AITriage: React.FC = () => {
               </div>
             </div>
           )}
-          
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -942,12 +986,12 @@ export const AITriage: React.FC = () => {
                   toast.error('Missing information. Please try again.');
                   return;
                 }
-                
+
                 try {
                   // Get collected info from current session
                   const conversation = await fetch(`${API_BASE_URL}/api/triage/conversation/${sessionId}`).then(r => r.json());
                   const collectedInfo = conversation.collected_info || {};
-                  
+
                   const requestBody = {
                     patient_id: user.id || '',
                     patient_name: user.name || '',
@@ -961,9 +1005,9 @@ export const AITriage: React.FC = () => {
                     symptoms: collectedInfo.issue || messages.find(m => m.type === 'user')?.content || null,
                     pain_rating: collectedInfo.pain_rating !== null && collectedInfo.pain_rating !== undefined ? String(collectedInfo.pain_rating) : null,
                   };
-                  
+
                   console.log('Scheduling appointment with:', requestBody);
-                  
+
                   const response = await fetch(`${API_BASE_URL}/api/appointments/schedule`, {
                     method: 'POST',
                     headers: {
@@ -971,7 +1015,7 @@ export const AITriage: React.FC = () => {
                     },
                     body: JSON.stringify(requestBody),
                   });
-                  
+
                   if (!response.ok) {
                     let errorMessage = 'Failed to schedule appointment';
                     try {
@@ -985,8 +1029,8 @@ export const AITriage: React.FC = () => {
                         });
                         errorMessage = errors.join(', ');
                       } else if (errorData.detail) {
-                        errorMessage = typeof errorData.detail === 'string' 
-                          ? errorData.detail 
+                        errorMessage = typeof errorData.detail === 'string'
+                          ? errorData.detail
                           : JSON.stringify(errorData.detail);
                       } else if (errorData.message) {
                         errorMessage = typeof errorData.message === 'string'
@@ -1006,16 +1050,16 @@ export const AITriage: React.FC = () => {
                     }
                     throw new Error(errorMessage);
                   }
-                  
+
                   const data = await response.json();
                   toast.success('Appointment scheduled successfully!', {
                     description: `Appointment with ${selectedDoctor.name} on ${selectedSlot.date} at ${selectedSlot.time}`,
                   });
-                  
+
                   setIsAppointmentDialogOpen(false);
                   setSelectedSlot(null);
                   setSelectedDoctor(null);
-                  
+
                   console.log('Appointment scheduled:', data);
                 } catch (error) {
                   console.error('Error scheduling appointment:', error);
