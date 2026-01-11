@@ -39,7 +39,6 @@ const patientNavItems: NavItem[] = [
   { label: 'Appointments', href: '/patient/appointments', icon: Calendar },
   { label: 'Telehealth', href: '/patient/telehealth', icon: Video },
   { label: 'Health Records', href: '/patient/records', icon: FileText },
-  { label: 'Billing', href: '/patient/billing', icon: CreditCard },
   { label: 'Notifications', href: '/patient/notifications', icon: Bell },
 ];
 

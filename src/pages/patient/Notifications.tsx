@@ -11,135 +11,11 @@ import {
     Sparkles,
     Calendar,
 } from 'lucide-react';
-
-interface Notification {
-    id: number;
-    type: 'medication' | 'reminder' | 'recommendation' | 'appointment';
-    title: string;
-    message: string;
-    time: string;
-    isRead: boolean;
-    priority?: 'high' | 'medium' | 'low';
-    medicationName?: string;
-    medicationTime?: string;
-    isCompleted?: boolean;
-    completedAt?: string;
-}
-
-// Get active medications from prescriptions
-const activeMedications = [
-    {
-        name: 'Amoxicillin',
-        times: ['08:00 AM', '02:00 PM', '08:00 PM'],
-        instructions: 'Take with food',
-    },
-    {
-        name: 'Ibuprofen',
-        times: ['As needed'],
-        instructions: 'Take with food. Maximum 3 times per day.',
-    },
-];
-
-// Generate notifications based on active medications and current time
-const generateNotifications = (): Notification[] => {
-    const notifications: Notification[] = [];
-
-    // Medication reminders - Add sample medication notifications that are always visible
-    notifications.push({
-        id: 1,
-        type: 'medication',
-        title: 'Time to take Amoxicillin',
-        message: 'It\'s time for your Amoxicillin medication. Take with food.',
-        time: 'Just now',
-        isRead: false,
-        priority: 'high',
-        medicationName: 'Amoxicillin',
-        medicationTime: '08:00 PM',
-        isCompleted: false,
-    });
-
-    notifications.push({
-        id: 2,
-        type: 'medication',
-        title: 'Time to take Amoxicillin',
-        message: 'It\'s time for your Amoxicillin medication. Take with food.',
-        time: '2 hours ago',
-        isRead: false,
-        priority: 'high',
-        medicationName: 'Amoxicillin',
-        medicationTime: '02:00 PM',
-        isCompleted: false,
-    });
-
-    // AI Health Recommendations (General suggestions, no logging)
-    const recommendations = [
-        {
-            id: notifications.length + 1,
-            type: 'recommendation' as const,
-            title: 'Stay Hydrated',
-            message: 'Dr. Priya Patel suggested drinking at least 8 glasses of water daily. Remember to stay hydrated throughout the day!',
-            time: '10 minutes ago',
-            isRead: false,
-            priority: 'low' as const,
-            isCompleted: false,
-        },
-        {
-            id: notifications.length + 2,
-            type: 'recommendation' as const,
-            title: 'Daily Exercise',
-            message: 'Regular exercise is important for your overall health. Dr. Arjun Singh recommended 30 minutes of daily physical activity.',
-            time: '1 hour ago',
-            isRead: false,
-            priority: 'medium' as const,
-            isCompleted: false,
-        },
-        {
-            id: notifications.length + 3,
-            type: 'recommendation' as const,
-            title: 'Dietary Reminder',
-            message: 'For better cholesterol control, increase omega-3 intake through fish or supplements as suggested by Dr. Arjun Singh.',
-            time: '2 hours ago',
-            isRead: false,
-            priority: 'low' as const,
-            isCompleted: false,
-        },
-        {
-            id: notifications.length + 4,
-            type: 'recommendation' as const,
-            title: 'Medication Compliance',
-            message: 'Remember to take Levothyroxine on empty stomach, 30 minutes before breakfast as advised by Dr. Sarah Khan.',
-            time: '3 hours ago',
-            isRead: true,
-            priority: 'medium' as const,
-            isCompleted: false,
-        },
-    ];
-
-    notifications.push(...recommendations);
-
-    // Appointment reminders
-    notifications.push({
-        id: notifications.length + 1,
-        type: 'appointment',
-        title: 'Upcoming Appointment',
-        message: 'You have an appointment with Dr. Priya Patel today at 3:00 PM',
-        time: '1 hour ago',
-        isRead: false,
-        priority: 'high',
-        isCompleted: false,
-    });
-
-    return notifications.sort((a, b) => {
-        // Sort by priority and read status
-        if (a.isRead !== b.isRead) return a.isRead ? 1 : -1;
-        const priorityOrder = { high: 0, medium: 1, low: 2 };
-        return priorityOrder[a.priority || 'low'] - priorityOrder[b.priority || 'low'];
-    });
-};
+import { Notification, generateNotifications, getUnreadCount } from '@/data/notifications';
 
 export const Notifications: React.FC = () => {
     const [notifications, setNotifications] = useState<Notification[]>(generateNotifications());
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const unreadCount = getUnreadCount(notifications);
 
     const handleTaskComplete = (id: number) => {
         const notification = notifications.find(n => n.id === id);
@@ -153,11 +29,11 @@ export const Notifications: React.FC = () => {
             minute: '2-digit',
         });
 
-        setNotifications(prev => prev.map(notif => 
-            notif.id === id 
-                ? { 
-                    ...notif, 
-                    isCompleted: true, 
+        setNotifications(prev => prev.map(notif =>
+            notif.id === id
+                ? {
+                    ...notif,
+                    isCompleted: true,
                     isRead: true,
                     completedAt: completedAt,
                 }
@@ -235,9 +111,8 @@ export const Notifications: React.FC = () => {
                         notifications.map((notification) => (
                             <div
                                 key={notification.id}
-                                className={`p-5 hover:bg-muted/30 transition-colors ${
-                                    !notification.isRead ? 'bg-primary/5 border-l-4 border-l-primary' : ''
-                                }`}
+                                className={`p-5 hover:bg-muted/30 transition-colors ${!notification.isRead ? 'bg-primary/5 border-l-4 border-l-primary' : ''
+                                    }`}
                             >
                                 <div className="flex gap-4">
                                     <div className="mt-1">
@@ -278,9 +153,9 @@ export const Notifications: React.FC = () => {
                                             <div className="mt-3">
                                                 {!notification.isCompleted || notification.isCompleted === false ? (
                                                     <div className="space-y-2">
-                                                        <Button 
-                                                            size="sm" 
-                                                            variant="default" 
+                                                        <Button
+                                                            size="sm"
+                                                            variant="default"
                                                             className="gap-2 w-full sm:w-auto"
                                                             onClick={() => handleTaskComplete(notification.id)}
                                                         >
