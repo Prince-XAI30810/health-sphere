@@ -23,6 +23,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { user } = useAuth();
   const isPatient = user?.role === 'patient';
   const isDoctor = user?.role === 'doctor';
+  const isAdmin = user?.role === 'admin';
 
   const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
@@ -59,7 +60,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               )}
             </div>
             <div className="flex items-center gap-4">
-              {!isPatient && !isDoctor && (
+              {!isPatient && !isDoctor && !isAdmin && (
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -68,7 +69,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   />
                 </div>
               )}
-              {!isDoctor && (
+              {!isDoctor && !isAdmin && (
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="relative">

@@ -18,10 +18,8 @@ import {
   ClipboardList,
   Pill,
   BedDouble,
-  BarChart3,
   Package,
   FlaskConical,
-  Receipt,
   UserCog,
   Activity,
   Heart,
@@ -54,11 +52,9 @@ const doctorNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: Home },
   { label: 'Bed Management', href: '/admin/beds', icon: BedDouble },
-  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { label: 'Roster', href: '/admin/roster', icon: UserCog },
   { label: 'Inventory', href: '/admin/inventory', icon: Package },
   { label: 'Lab & Imaging', href: '/admin/lab', icon: FlaskConical },
-  { label: 'Billing', href: '/admin/billing', icon: Receipt },
 ];
 
 export const Sidebar: React.FC = () => {
