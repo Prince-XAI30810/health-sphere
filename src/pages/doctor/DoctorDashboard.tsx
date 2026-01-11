@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { AIInsightPopover } from '@/components/shared/AIInsightPopover';
 import { useAuth } from '@/contexts/AuthContext';
+import { prescriptions, generatePrescriptionPDF, type Prescription } from '@/data/prescriptions';
 import {
   Users,
   Video,
@@ -49,6 +50,7 @@ import {
   X,
   Minimize2,
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface QueuePatient {
   id: string;
@@ -94,6 +96,189 @@ interface QueuePatient {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+
+// Lab Results Interface (matching patient portal)
+interface LabResult {
+  id: number;
+  test: string;
+  date: string;
+  doctor: string;
+  status: string;
+  fileSize: string;
+  lab?: string;
+  aiInsights: string[];
+  results?: Record<string, { value: string; normal: string; unit?: string }>;
+}
+
+// Static Lab Results (from patient portal)
+const staticLabResults: LabResult[] = [
+  {
+    id: 1,
+    test: 'Complete Blood Count (CBC)',
+    date: 'Jan 8, 2026',
+    doctor: 'Dr. Priya Patel',
+    lab: 'City Health Lab',
+    status: 'Normal',
+    fileSize: '1.2 MB',
+    results: {
+      'Hemoglobin': { value: '14.8', normal: '12.0-17.0', unit: 'g/dL' },
+      'White Blood Cells': { value: '7.2', normal: '4.0-11.0', unit: '×10³/µL' },
+      'Platelets': { value: '250', normal: '150-450', unit: '×10³/µL' },
+      'Red Blood Cells': { value: '4.8', normal: '4.5-5.5', unit: '×10⁶/µL' },
+    },
+    aiInsights: [
+      'All blood cell counts are within healthy ranges, indicating good overall blood health',
+      'Hemoglobin levels are optimal, suggesting adequate oxygen transport throughout your body',
+      'No signs of infection or anemia detected'
+    ]
+  },
+  {
+    id: 2,
+    test: 'Lipid Profile',
+    date: 'Dec 15, 2025',
+    doctor: 'Dr. Arjun Singh',
+    lab: 'City Health Lab',
+    status: 'Borderline',
+    fileSize: '850 KB',
+    results: {
+      'Total Cholesterol': { value: '210', normal: '<200', unit: 'mg/dL' },
+      'LDL Cholesterol': { value: '145', normal: '<100', unit: 'mg/dL' },
+      'HDL Cholesterol': { value: '48', normal: '>40', unit: 'mg/dL' },
+      'Triglycerides': { value: '180', normal: '<150', unit: 'mg/dL' },
+    },
+    aiInsights: [
+      'LDL cholesterol is slightly elevated at 145 mg/dL (optimal: <100 mg/dL)',
+      'Consider dietary modifications: reduce saturated fats and increase fiber intake',
+      'Regular exercise and follow-up testing in 3 months recommended'
+    ]
+  },
+  {
+    id: 3,
+    test: 'Blood Glucose (Fasting)',
+    date: 'Dec 15, 2025',
+    doctor: 'Dr. Arjun Singh',
+    lab: 'City Health Lab',
+    status: 'Normal',
+    fileSize: '620 KB',
+    results: {
+      'Fasting Glucose': { value: '92', normal: '70-100', unit: 'mg/dL' },
+      'HbA1c': { value: '5.4', normal: '<5.7', unit: '%' },
+    },
+    aiInsights: [
+      'Fasting glucose level at 92 mg/dL is within normal range (70-100 mg/dL)',
+      'No indication of prediabetes or diabetes',
+      'Maintain current lifestyle habits for optimal glucose control'
+    ]
+  },
+];
+
+// Generate PDF Report for Lab Results (from patient portal)
+const generateLabReportPDF = (report: LabResult, userName: string, returnDataUrl: boolean = false): string | void => {
+  const doc = new jsPDF();
+  const primaryColor = [33, 150, 243];
+  const darkGray = [51, 51, 51];
+  const lightGray = [128, 128, 128];
+  let yPos = 20;
+
+  // Header
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 0, 210, 35, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(report.lab || 'City Health Lab', 105, 15, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Accredited by NABL | ISO 15189:2012 Certified', 105, 22, { align: 'center' });
+
+  // Report Title
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text(report.test.toUpperCase(), 105, 45, { align: 'center' });
+  yPos = 55;
+
+  // Patient Information
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
+  doc.line(10, yPos, 200, yPos);
+  yPos += 8;
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.text('PATIENT INFORMATION', 10, yPos);
+  yPos += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+  const patientInfo = [
+    ['Patient Name:', userName || 'Patient'],
+    ['Test Date:', report.date],
+    ['Ordering Physician:', report.doctor],
+    ['Report Status:', report.status],
+    ['Report ID:', `LAB-${report.id.toString().padStart(6, '0')}`],
+  ];
+  patientInfo.forEach(([label, value]) => {
+    doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+    doc.text(label, 10, yPos);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text(value, 60, yPos);
+    yPos += 6;
+  });
+  yPos += 5;
+
+  // Test Results
+  if (report.results) {
+    doc.setDrawColor(200, 200, 200);
+    doc.line(10, yPos, 200, yPos);
+    yPos += 8;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text('TEST RESULTS', 10, yPos);
+    yPos += 8;
+    doc.setFillColor(240, 240, 240);
+    doc.rect(10, yPos - 5, 190, 8, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text('Test Parameter', 12, yPos);
+    doc.text('Result', 80, yPos);
+    doc.text('Normal Range', 120, yPos);
+    doc.text('Unit', 170, yPos);
+    yPos += 8;
+    doc.setDrawColor(220, 220, 220);
+    doc.line(10, yPos - 2, 200, yPos - 2);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    Object.entries(report.results).forEach(([key, value]) => {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      doc.text(key, 12, yPos);
+      const isNormal = report.status === 'Normal';
+      doc.setTextColor(isNormal ? 34 : 255, isNormal ? 139 : 152, isNormal ? 34 : 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(value.value, 80, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.text(value.normal, 120, yPos);
+      doc.text(value.unit || '-', 170, yPos);
+      yPos += 7;
+      doc.setDrawColor(240, 240, 240);
+      doc.line(10, yPos - 2, 200, yPos - 2);
+    });
+  }
+
+  if (returnDataUrl) {
+    return doc.output('dataurlstring');
+  } else {
+    const fileName = `${report.test.replace(/[^a-z0-9]/gi, '_')}_${report.date.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+    doc.save(fileName);
+  }
+};
 
 const patientQueue: QueuePatient[] = [
   {
@@ -415,15 +600,37 @@ export const DoctorDashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
-  const [selectedLabReport, setSelectedLabReport] = useState<any>(null);
-  const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
+  const [selectedLabReport, setSelectedLabReport] = useState<LabResult | null>(null);
+  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [labReportPdfUrl, setLabReportPdfUrl] = useState<string | null>(null);
+  const [prescriptionPdfUrl, setPrescriptionPdfUrl] = useState<string | null>(null);
+
+  // Generate PDF for lab report when selected
+  useEffect(() => {
+    if (selectedLabReport && selectedPatient) {
+      const pdfUrl = generateLabReportPDF(selectedLabReport, selectedPatient.name, true) as string;
+      setLabReportPdfUrl(pdfUrl);
+    } else {
+      setLabReportPdfUrl(null);
+    }
+  }, [selectedLabReport, selectedPatient]);
+
+  // Generate PDF for prescription when selected
+  useEffect(() => {
+    if (selectedPrescription) {
+      const pdfUrl = generatePrescriptionPDF(selectedPrescription);
+      setPrescriptionPdfUrl(pdfUrl);
+    } else {
+      setPrescriptionPdfUrl(null);
+    }
+  }, [selectedPrescription]);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [isChatbotMinimized, setIsChatbotMinimized] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: 1,
       type: 'assistant',
-      content: 'Hello! I\'m your AI assistant. I can help you with information about patients in the queue. Ask me anything!',
+      content: 'Hello! I\'m your AI medical assistant. I can help you with:\n\n- **Patient queue information** - ask about any patient in your queue\n- **Medical knowledge** - clinical guidance, differential diagnosis, lab tests\n- **General medical questions** - evidence-based answers\n\nHow can I assist you today?',
       timestamp: new Date(),
     },
   ]);
@@ -465,42 +672,52 @@ export const DoctorDashboard: React.FC = () => {
         // Get doctor ID from user (assuming it's stored in user object or use email)
         const doctorId = user.id || 'doc1'; // Fallback to default doctor ID
 
-        // Fetch from patient queue instead
-        const queueResponse = await fetch(`${API_BASE_URL}/api/appointments/queue/doctor/${doctorId}`);
-        if (!queueResponse.ok) {
-          throw new Error('Failed to load patient queue');
+        // Fetch appointments directly to get ai_summary field
+        const appointmentsResponse = await fetch(`${API_BASE_URL}/api/appointments/doctor/${doctorId}`);
+        if (!appointmentsResponse.ok) {
+          throw new Error('Failed to load appointments');
         }
 
-        const queueData = await queueResponse.json();
+        const appointmentsData = await appointmentsResponse.json();
+        const appointmentsList = appointmentsData.appointments || [];
+
+        // Also fetch from patient queue for additional data
+        const queueResponse = await fetch(`${API_BASE_URL}/api/appointments/queue/doctor/${doctorId}`);
+        const queueData = queueResponse.ok ? await queueResponse.json() : { patients: [] };
         const queuePatients = queueData.patients || [];
 
-        // Convert queue patients to appointment format for compatibility
-        const convertedAppointments = queuePatients.map((patient: any) => ({
-          appointment_id: patient.appointment_id,
-          patient_id: patient.patient_id,
-          patient_name: patient.patient_name,
-          doctor_id: patient.doctor_id,
-          appointment_date: patient.appointment_date,
-          appointment_time: patient.appointment_time,
-          status: patient.status || 'scheduled',
-          reason: patient.symptoms || 'Triage appointment',
-          triage_session_id: null,
-          symptoms: patient.symptoms,
-          pain_rating: patient.pain_rating,
-          // Store queue data for display
-          queue_data: patient
-        }));
+        // Merge appointments with queue data, prioritizing appointments data for ai_summary
+        const convertedAppointments = appointmentsList.map((apt: any) => {
+          const queuePatient = queuePatients.find((p: any) => p.appointment_id === apt.appointment_id);
+          return {
+            appointment_id: apt.appointment_id,
+            patient_id: apt.patient_id,
+            patient_name: apt.patient_name,
+            doctor_id: apt.doctor_id,
+            appointment_date: apt.appointment_date,
+            appointment_time: apt.appointment_time,
+            status: apt.status || 'scheduled',
+            reason: apt.reason || apt.symptoms || 'Triage appointment',
+            triage_session_id: apt.triage_session_id,
+            symptoms: apt.symptoms,
+            pain_rating: apt.pain_rating,
+            ai_summary: apt.ai_summary, // Use ai_summary from appointments
+            // Store queue data for additional info
+            queue_data: queuePatient
+          };
+        });
 
         setAppointments(convertedAppointments);
 
-        // Store patient summaries from queue
+        // Store patient summaries from appointments ai_summary
         const summaries: Record<string, any> = {};
-        queuePatients.forEach((patient: any) => {
-          summaries[patient.appointment_id] = {
-            summary: patient.summary,
-            triage_level: patient.triage_score,
-            recommended_actions: patient.key_points || []
-          };
+        appointmentsList.forEach((apt: any) => {
+          if (apt.ai_summary && Array.isArray(apt.ai_summary)) {
+            summaries[apt.appointment_id] = {
+              summary: apt.ai_summary.join('\n'), // Join the 2 lines
+              ai_summary: apt.ai_summary
+            };
+          }
         });
 
         setPatientSummaries(summaries);
@@ -592,76 +809,34 @@ export const DoctorDashboard: React.FC = () => {
     }
   };
 
-  // AI Chatbot function to answer questions about patients
-  const handleChatbotQuery = async (query: string) => {
-    const lowerQuery = query.toLowerCase();
+  // AI Chatbot function to answer questions using backend API
+  const handleChatbotQuery = async (query: string): Promise<string> => {
+    try {
+      const doctorId = user?.id || 'doc1';
+      const doctorName = user?.name || 'Dr. Priya Patel';
 
-    // Patient search by name
-    if (lowerQuery.includes('patient') || lowerQuery.includes('who')) {
-      const nameMatch = patientQueue.find(p =>
-        lowerQuery.includes(p.name.toLowerCase().split(' ')[0]) ||
-        lowerQuery.includes(p.name.toLowerCase())
-      );
-      if (nameMatch) {
-        return `Patient ${nameMatch.name} (${nameMatch.age}y, ${nameMatch.gender}) - Chief Complaint: ${nameMatch.chiefComplaint}. Triage Level: ${nameMatch.triageLevel.toUpperCase()}. Wait Time: ${nameMatch.waitTime}. Status: ${nameMatch.status}.`;
+      const response = await fetch(`${API_BASE_URL}/api/doctor-chat/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: query,
+          doctor_id: doctorId,
+          doctor_name: doctorName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response from AI');
       }
+
+      const data = await response.json();
+      return data.response || 'I apologize, but I could not process your request.';
+    } catch (error) {
+      console.error('Error in chatbot query:', error);
+      return 'I apologize, but I am having trouble connecting to the AI service. Please try again.';
     }
-
-    // High priority patients
-    if (lowerQuery.includes('urgent') || lowerQuery.includes('high priority') || lowerQuery.includes('priority')) {
-      const highPriority = patientQueue.filter(p => p.triageLevel === 'high');
-      if (highPriority.length > 0) {
-        const names = highPriority.map(p => p.name).join(', ');
-        return `There are ${highPriority.length} high priority patient(s): ${names}. They require immediate attention.`;
-      }
-      return 'No high priority patients in the queue currently.';
-    }
-
-    // Total patients
-    if (lowerQuery.includes('total') || lowerQuery.includes('how many') || lowerQuery.includes('count')) {
-      return `There are ${patientQueue.length} patients in the queue. ${patientQueue.filter(p => p.triageLevel === 'high').length} high priority, ${patientQueue.filter(p => p.triageLevel === 'medium').length} medium priority, and ${patientQueue.filter(p => p.triageLevel === 'low').length} low priority.`;
-    }
-
-    // Patient symptoms/complaints
-    if (lowerQuery.includes('symptom') || lowerQuery.includes('complaint')) {
-      const symptomMatch = patientQueue.find(p =>
-        lowerQuery.includes(p.chiefComplaint.toLowerCase().split(',')[0].split(' ')[0])
-      );
-      if (symptomMatch) {
-        return `${symptomMatch.name} has the following chief complaint: ${symptomMatch.chiefComplaint}.`;
-      }
-    }
-
-    // Wait times
-    if (lowerQuery.includes('wait') || lowerQuery.includes('waiting')) {
-      const avgWait = patientQueue.reduce((acc, p) => {
-        const mins = parseInt(p.waitTime.replace(' min', '').replace(' hr', ''));
-        return acc + mins;
-      }, 0) / patientQueue.length;
-      return `Average wait time is approximately ${Math.round(avgWait)} minutes.`;
-    }
-
-    // General help
-    if (lowerQuery.includes('help') || lowerQuery.includes('what can you')) {
-      return `I can help you with:
-- Patient information (ask about any patient by name)
-- Priority patients (ask about urgent/high priority patients)
-- Queue statistics (total patients, wait times)
-- Patient symptoms and complaints
-- General questions about the patient queue
-
-Try asking: "Who is the highest priority patient?" or "How many patients are waiting?"`;
-    }
-
-    // Default response
-    return `I can help you with information about patients in the queue. Try asking about:
-- Specific patients by name
-- High priority or urgent patients
-- Total number of patients
-- Patient symptoms or complaints
-- Wait times
-
-For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta"`;
   };
 
   const handleSendChatMessage = async (e: React.FormEvent) => {
@@ -680,8 +855,8 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
     setChatInput('');
     setIsTyping(true);
 
-    // Simulate AI thinking
-    setTimeout(async () => {
+    // Call AI API
+    try {
       const response = await handleChatbotQuery(currentInput);
       const assistantMessage: ChatMessage = {
         id: chatMessages.length + 2,
@@ -690,8 +865,18 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
         timestamp: new Date(),
       };
       setChatMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+      const errorMessage: ChatMessage = {
+        id: chatMessages.length + 2,
+        type: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date(),
+      };
+      setChatMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   // Available lab tests
@@ -837,23 +1022,58 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                 return (
                   <div
                     key={appointment.appointment_id}
-                    onClick={() => handlePatientClick({
-                      id: appointment.patient_id,
-                      name: appointment.patient_name,
-                      age: 0,
-                      gender: '',
-                      chiefComplaint: appointment.symptoms || appointment.reason || 'No complaint provided',
-                      triageLevel: triageLevel as 'high' | 'medium' | 'low',
-                      waitTime: '0 min',
-                      status: 'waiting',
-                      phone: '',
-                      appointmentTime: appointment.appointment_time,
-                    } as QueuePatient)}
+                    onClick={() => {
+                      const queueData = appointment.queue_data || {};
+                      // Use static patient profile data - default values for all patients
+                      const staticProfile = {
+                        age: 35, // Default age
+                        gender: 'Male', // Default gender
+                        bloodGroup: 'O+', // Default blood group
+                      };
+                      handlePatientClick({
+                        id: appointment.patient_id,
+                        name: appointment.patient_name,
+                        age: queueData.age || staticProfile.age,
+                        gender: queueData.gender || staticProfile.gender,
+                        chiefComplaint: queueData.chief_complaint || appointment.symptoms || appointment.reason || 'No complaint provided',
+                        triageLevel: triageLevel as 'high' | 'medium' | 'low',
+                        waitTime: '0 min',
+                        status: 'waiting',
+                        phone: '',
+                        bloodGroup: queueData.blood_group || staticProfile.bloodGroup,
+                        appointmentTime: appointment.appointment_time,
+                        // Use static medical records from patient portal
+                        labReports: staticLabResults.map(lr => ({
+                          id: lr.id,
+                          test: lr.test,
+                          date: lr.date,
+                          doctor: lr.doctor,
+                          status: lr.status,
+                          aiInsights: lr.aiInsights,
+                          results: lr.results,
+                          lab: lr.lab,
+                        })),
+                        prescriptions: prescriptions.map(p => ({
+                          id: p.id,
+                          date: p.date,
+                          doctor: p.doctor,
+                          diagnosis: p.diagnosis,
+                          medications: p.medications.map(m => `${m.name} ${m.dosage}`),
+                          aiInsights: [
+                            `Prescription from ${p.specialty} for ${p.diagnosis}`,
+                            `${p.medications.length} medication(s) prescribed`,
+                            p.additionalNotes || 'Follow doctor\'s instructions',
+                          ],
+                          specialty: p.specialty,
+                          additionalNotes: p.additionalNotes,
+                        })),
+                      } as QueuePatient)
+                    }}
                     className={`p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${triageLevel === 'high'
-                        ? 'border-destructive bg-destructive/5 hover:border-destructive/80'
-                        : triageLevel === 'medium'
-                          ? 'border-warning bg-warning/5 hover:border-warning/80'
-                          : 'border-border hover:border-primary/50'
+                      ? 'border-destructive bg-destructive/5 hover:border-destructive/80'
+                      : triageLevel === 'medium'
+                        ? 'border-warning bg-warning/5 hover:border-warning/80'
+                        : 'border-border hover:border-primary/50'
                       }`}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -873,16 +1093,14 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                       <p className="text-xs text-muted-foreground line-clamp-2">
                         {appointment.symptoms || appointment.reason || 'No complaint provided'}
                       </p>
-                      {summary && summary.summary && (
+                      {appointment.ai_summary && Array.isArray(appointment.ai_summary) && appointment.ai_summary.length > 0 && (
                         <div className="mt-2 p-2 bg-muted rounded text-xs">
                           <p className="font-medium mb-1">AI Summary:</p>
-                          <p className="text-muted-foreground line-clamp-2">{summary.summary}</p>
-                        </div>
-                      )}
-                      {queueData.summary && !summary && (
-                        <div className="mt-2 p-2 bg-muted rounded text-xs">
-                          <p className="font-medium mb-1">AI Summary:</p>
-                          <p className="text-muted-foreground line-clamp-2">{queueData.summary}</p>
+                          <div className="text-muted-foreground space-y-1">
+                            {appointment.ai_summary.map((line: string, idx: number) => (
+                              <p key={idx} className="line-clamp-1">{line}</p>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -905,10 +1123,10 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
               key={patient.id}
               onClick={() => handlePatientClick(patient)}
               className={`p-5 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${patient.triageLevel === 'high'
-                  ? 'border-destructive bg-destructive/5 hover:border-destructive/80'
-                  : patient.triageLevel === 'medium'
-                    ? 'border-warning bg-warning/5 hover:border-warning/80'
-                    : 'border-border hover:border-primary/50'
+                ? 'border-destructive bg-destructive/5 hover:border-destructive/80'
+                : patient.triageLevel === 'medium'
+                  ? 'border-warning bg-warning/5 hover:border-warning/80'
+                  : 'border-border hover:border-primary/50'
                 }`}
             >
               <div className="flex items-start justify-between mb-3">
@@ -963,34 +1181,27 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
               </SheetHeader>
 
               {/* AI Patient Summary */}
-              {(patientSummaries[selectedPatient.id] || appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data) && (
-                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <h4 className="font-semibold text-sm text-foreground">AI-Generated Patient Summary</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line">
-                    {patientSummaries[selectedPatient.id]?.summary ||
-                      appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.summary ||
-                      'No summary available'}
-                  </p>
-                  {(patientSummaries[selectedPatient.id]?.recommended_actions ||
-                    appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.key_points) && (
-                      <div className="mt-3 pt-3 border-t border-primary/20">
-                        <p className="text-xs font-medium text-foreground mb-2">Key Points:</p>
-                        <ul className="text-xs text-muted-foreground space-y-1">
-                          {(patientSummaries[selectedPatient.id]?.recommended_actions ||
-                            appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data?.key_points || []).map((point: string, idx: number) => (
-                              <li key={idx} className="flex gap-2">
-                                <span className="text-primary">•</span>
-                                <span>{point}</span>
-                              </li>
-                            ))}
-                        </ul>
+              {(() => {
+                const appointment = appointments.find(apt => apt.patient_id === selectedPatient.id);
+                const aiSummary = appointment?.ai_summary || patientSummaries[appointment?.appointment_id]?.ai_summary;
+
+                if (aiSummary && Array.isArray(aiSummary) && aiSummary.length > 0) {
+                  return (
+                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        <h4 className="font-semibold text-sm text-foreground">AI-Generated Patient Summary</h4>
                       </div>
-                    )}
-                </div>
-              )}
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {aiSummary.map((line: string, idx: number) => (
+                          <p key={idx} className="whitespace-pre-line">{line}</p>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {/* Patient Profile Section */}
               <div className="space-y-4">
@@ -1001,26 +1212,59 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                 <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Age</p>
-                    <p className="font-medium">{selectedPatient.age} years</p>
+                    <p className="font-medium">
+                      {(() => {
+                        const summary = patientSummaries[selectedPatient.id];
+                        const profile = summary?.patient_profile;
+                        const queueData = appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data;
+                        return profile?.age || queueData?.age || selectedPatient.age || 0;
+                      })()} years
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Gender</p>
-                    <p className="font-medium">{selectedPatient.gender}</p>
+                    <p className="font-medium">
+                      {(() => {
+                        const summary = patientSummaries[selectedPatient.id];
+                        const profile = summary?.patient_profile;
+                        const queueData = appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data;
+                        return profile?.gender || queueData?.gender || selectedPatient.gender || '';
+                      })()}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Appointment Time</p>
                     <p className="font-medium flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      {selectedPatient.appointmentTime || 'Not scheduled'}
+                      {(() => {
+                        const summary = patientSummaries[selectedPatient.id];
+                        const profile = summary?.patient_profile;
+                        const queueData = appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data;
+                        return profile?.appointment_time || queueData?.appointment_time || selectedPatient.appointmentTime || 'Not scheduled';
+                      })()}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Blood Group</p>
-                    <p className="font-medium">{selectedPatient.bloodGroup}</p>
+                    <p className="font-medium">
+                      {(() => {
+                        const summary = patientSummaries[selectedPatient.id];
+                        const profile = summary?.patient_profile;
+                        const queueData = appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data;
+                        return profile?.blood_group || queueData?.blood_group || selectedPatient.bloodGroup || '';
+                      })()}
+                    </p>
                   </div>
                   <div className="col-span-2">
                     <p className="text-sm text-muted-foreground mb-1">Chief Complaint</p>
-                    <p className="font-medium">{selectedPatient.chiefComplaint}</p>
+                    <p className="font-medium">
+                      {(() => {
+                        const summary = patientSummaries[selectedPatient.id];
+                        const profile = summary?.patient_profile;
+                        const queueData = appointments.find(apt => apt.patient_id === selectedPatient.id)?.queue_data;
+                        return profile?.chief_complaint || queueData?.chief_complaint || selectedPatient.chiefComplaint || '';
+                      })()}
+                    </p>
                   </div>
                   {selectedPatient.allergies && selectedPatient.allergies.length > 0 && (
                     <div className="col-span-2">
@@ -1112,11 +1356,29 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setSelectedLabReport(report)}
+                              onClick={() => {
+                                const labResult = staticLabResults.find(lr => lr.id === report.id);
+                                if (labResult) {
+                                  setSelectedLabReport(labResult);
+                                }
+                              }}
                               className="gap-2"
                             >
                               <Eye className="w-4 h-4" />
                               View
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Download PDF"
+                              onClick={() => {
+                                const labResult = staticLabResults.find(lr => lr.id === report.id);
+                                if (labResult && selectedPatient) {
+                                  generateLabReportPDF(labResult, selectedPatient.name, false);
+                                }
+                              }}
+                            >
+                              <Download className="w-4 h-4 text-muted-foreground" />
                             </Button>
                           </div>
                         </div>
@@ -1149,7 +1411,12 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setSelectedPrescription(prescription)}
+                              onClick={() => {
+                                const presc = prescriptions.find(p => p.id === prescription.id);
+                                if (presc) {
+                                  setSelectedPrescription(presc);
+                                }
+                              }}
                               className="gap-2"
                             >
                               <Eye className="w-4 h-4" />
@@ -1170,33 +1437,12 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                   </div>
                 )}
 
-                {/* Show medical records from backend */}
-                {patientSummaries[selectedPatient.id]?.medical_records && patientSummaries[selectedPatient.id].medical_records.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-muted-foreground">Medical Records (Backend)</h4>
-                    {patientSummaries[selectedPatient.id].medical_records.map((record: any) => (
-                      <div key={record.record_id} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <h5 className="font-medium text-foreground">{record.title}</h5>
-                            <p className="text-xs text-muted-foreground">{record.record_type} • {record.date}</p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{record.description}</p>
-                        {record.doctor_name && (
-                          <p className="text-xs text-muted-foreground mt-1">By: {record.doctor_name}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
+                {/* Show message if no medical records */}
                 {(!selectedPatient.labReports || selectedPatient.labReports.length === 0) &&
-                  (!selectedPatient.prescriptions || selectedPatient.prescriptions.length === 0) &&
-                  (!patientSummaries[selectedPatient.id]?.medical_records || patientSummaries[selectedPatient.id].medical_records.length === 0) && (
-                    <p className="text-muted-foreground text-center py-4 border rounded-lg">
+                  (!selectedPatient.prescriptions || selectedPatient.prescriptions.length === 0) && (
+                    <div className="text-sm text-muted-foreground text-center py-4 border rounded-lg">
                       No medical records available
-                    </p>
+                    </div>
                   )}
               </div>
 
@@ -1290,28 +1536,6 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
         </DialogContent>
       </Dialog>
 
-      {/* Lab Report PDF Viewer */}
-      <Dialog open={!!selectedLabReport} onOpenChange={() => setSelectedLabReport(null)}>
-        <DialogContent className="max-w-6xl max-h-[95vh] p-0">
-          <LabReportViewer
-            report={selectedLabReport}
-            patientName={selectedPatient?.name || 'Patient'}
-            onClose={() => setSelectedLabReport(null)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Prescription PDF Viewer */}
-      <Dialog open={!!selectedPrescription} onOpenChange={() => setSelectedPrescription(null)}>
-        <DialogContent className="max-w-6xl max-h-[95vh] p-0">
-          <PrescriptionViewer
-            prescription={selectedPrescription}
-            patientName={selectedPatient?.name || 'Patient'}
-            onClose={() => setSelectedPrescription(null)}
-          />
-        </DialogContent>
-      </Dialog>
-
       {/* Chatbot Floating Button */}
       {!isChatbotOpen && (
         <Button
@@ -1325,6 +1549,101 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
           <Bot className="w-6 h-6 text-white" />
         </Button>
       )}
+
+      {/* Lab Report PDF Viewer */}
+      <Dialog open={!!selectedLabReport} onOpenChange={() => setSelectedLabReport(null)}>
+        <DialogContent className="max-w-6xl max-h-[95vh] p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle>{selectedLabReport?.test} Report</DialogTitle>
+                <DialogDescription className="mt-1">
+                  Report dated {selectedLabReport?.date} • {selectedLabReport?.lab || 'Laboratory'}
+                </DialogDescription>
+              </div>
+              <Button
+                onClick={() => {
+                  if (selectedLabReport && selectedPatient) {
+                    generateLabReportPDF(selectedLabReport, selectedPatient.name, false);
+                  }
+                }}
+                variant="outline"
+                size="sm"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="relative w-full h-[calc(95vh-120px)] bg-muted/20">
+            {labReportPdfUrl ? (
+              <iframe
+                src={labReportPdfUrl}
+                className="w-full h-full border-0"
+                title={`${selectedLabReport?.test} PDF Report`}
+                style={{ minHeight: '600px' }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading PDF...</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Prescription PDF Viewer */}
+      <Dialog open={!!selectedPrescription} onOpenChange={() => setSelectedPrescription(null)}>
+        <DialogContent className="max-w-6xl max-h-[95vh] p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle>Prescription - {selectedPrescription?.doctor}</DialogTitle>
+                <DialogDescription className="mt-1">
+                  {selectedPrescription?.date} • {selectedPrescription?.specialty}
+                </DialogDescription>
+              </div>
+              <Button
+                onClick={() => {
+                  if (prescriptionPdfUrl && selectedPrescription) {
+                    const link = document.createElement('a');
+                    link.href = prescriptionPdfUrl;
+                    link.download = `Prescription_${selectedPrescription.date.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }
+                }}
+                variant="outline"
+                size="sm"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="relative w-full h-[calc(95vh-120px)] bg-muted/20">
+            {prescriptionPdfUrl ? (
+              <iframe
+                src={prescriptionPdfUrl}
+                className="w-full h-full border-0"
+                title="Prescription PDF"
+                style={{ minHeight: '600px' }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading prescription...</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Chatbot Panel */}
       {isChatbotOpen && (
@@ -1372,8 +1691,8 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                   >
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-secondary-foreground'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary text-secondary-foreground'
                         }`}
                     >
                       {message.type === 'user' ? (
@@ -1385,11 +1704,17 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
                     <div className={`max-w-[80%] ${message.type === 'user' ? 'text-right' : ''}`}>
                       <div
                         className={`inline-block p-3 rounded-xl text-sm ${message.type === 'user'
-                            ? 'bg-primary text-primary-foreground rounded-br-md'
-                            : 'bg-muted rounded-bl-md'
+                          ? 'bg-primary text-primary-foreground rounded-br-md'
+                          : 'bg-muted rounded-bl-md'
                           }`}
                       >
-                        {message.content}
+                        {message.type === 'assistant' ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&>p]:my-1 [&>ul]:my-1 [&>ol]:my-1 [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm [&>h4]:text-xs">
+                            <ReactMarkdown>{message.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          message.content
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1433,369 +1758,6 @@ For example: "Who is the highest priority patient?" or "Tell me about Arun Mehta
       )}
     </DashboardLayout>
   );
-};
-
-// Lab Report PDF Viewer Component
-const LabReportViewer: React.FC<{ report: any; patientName: string; onClose: () => void }> = ({ report, patientName, onClose }) => {
-  const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (report) {
-      const dataUrl = generateLabReportPDF(report, patientName, true) as string;
-      setPdfDataUrl(dataUrl);
-    } else {
-      setPdfDataUrl(null);
-    }
-  }, [report, patientName]);
-
-  if (!report) return null;
-
-  const handleDownloadPDF = () => {
-    generateLabReportPDF(report, patientName, false);
-  };
-
-  return (
-    <>
-      <DialogHeader className="px-6 pt-6 pb-4 border-b">
-        <div className="flex items-center justify-between">
-          <div>
-            <DialogTitle>{report.test} Report</DialogTitle>
-            <DialogDescription className="mt-1">
-              Report dated {report.date} • {report.lab || 'Laboratory'}
-            </DialogDescription>
-          </div>
-          <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Download
-          </Button>
-        </div>
-      </DialogHeader>
-
-      <div className="relative w-full h-[calc(95vh-120px)] bg-muted/20">
-        {pdfDataUrl ? (
-          <iframe
-            src={pdfDataUrl}
-            className="w-full h-full border-0"
-            title={`${report.test} PDF Report`}
-            style={{ minHeight: '600px' }}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading PDF...</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
-// Prescription PDF Viewer Component
-const PrescriptionViewer: React.FC<{ prescription: any; patientName: string; onClose: () => void }> = ({ prescription, patientName, onClose }) => {
-  const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (prescription) {
-      const dataUrl = generatePrescriptionPDF(prescription, patientName, true) as string;
-      setPdfDataUrl(dataUrl);
-    } else {
-      setPdfDataUrl(null);
-    }
-  }, [prescription, patientName]);
-
-  if (!prescription) return null;
-
-  const handleDownloadPDF = () => {
-    generatePrescriptionPDF(prescription, patientName, false);
-  };
-
-  return (
-    <>
-      <DialogHeader className="px-6 pt-6 pb-4 border-b">
-        <div className="flex items-center justify-between">
-          <div>
-            <DialogTitle>Prescription - {prescription.diagnosis}</DialogTitle>
-            <DialogDescription className="mt-1">
-              Prescribed on {prescription.date} • {prescription.doctor}
-            </DialogDescription>
-          </div>
-          <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Download
-          </Button>
-        </div>
-      </DialogHeader>
-
-      <div className="relative w-full h-[calc(95vh-120px)] bg-muted/20">
-        {pdfDataUrl ? (
-          <iframe
-            src={pdfDataUrl}
-            className="w-full h-full border-0"
-            title={`Prescription PDF`}
-            style={{ minHeight: '600px' }}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading PDF...</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
-// Generate Lab Report PDF
-const generateLabReportPDF = (report: any, patientName: string, returnDataUrl: boolean = false): string | void => {
-  const doc = new jsPDF();
-  const primaryColor = [33, 150, 243];
-  const darkGray = [51, 51, 51];
-  const lightGray = [128, 128, 128];
-  let yPos = 20;
-
-  // Header
-  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.rect(0, 0, 210, 35, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.text(report.lab || 'MediVerse Laboratory', 105, 15, { align: 'center' });
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Accredited by NABL | ISO 15189:2012 Certified', 105, 22, { align: 'center' });
-
-  // Report Title
-  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.text(report.test.toUpperCase(), 105, 45, { align: 'center' });
-
-  yPos = 55;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(10, yPos, 200, yPos);
-  yPos += 8;
-
-  // Patient Information
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('PATIENT INFORMATION', 10, yPos);
-  yPos += 8;
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-
-  const patientInfo = [
-    ['Patient Name:', patientName],
-    ['Test Date:', report.date],
-    ['Ordering Physician:', report.doctor],
-    ['Report Status:', report.status],
-  ];
-
-  patientInfo.forEach(([label, value]) => {
-    doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-    doc.text(label, 10, yPos);
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.text(value, 60, yPos);
-    yPos += 6;
-  });
-
-  yPos += 5;
-
-  // Test Results
-  if (report.results) {
-    doc.setDrawColor(200, 200, 200);
-    doc.line(10, yPos, 200, yPos);
-    yPos += 8;
-
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TEST RESULTS', 10, yPos);
-    yPos += 8;
-
-    doc.setFillColor(240, 240, 240);
-    doc.rect(10, yPos - 5, 190, 8, 'F');
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Test Parameter', 12, yPos);
-    doc.text('Result', 80, yPos);
-    doc.text('Normal Range', 120, yPos);
-    doc.text('Unit', 170, yPos);
-
-    yPos += 8;
-    doc.setDrawColor(220, 220, 220);
-    doc.line(10, yPos - 2, 200, yPos - 2);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-
-    Object.entries(report.results).forEach(([key, value]: [string, any]) => {
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
-      }
-
-      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-      doc.text(key, 12, yPos);
-
-      const isNormal = report.status === 'Normal';
-      doc.setTextColor(isNormal ? 34 : 255, isNormal ? 139 : 152, isNormal ? 34 : 0);
-      doc.setFont('helvetica', 'bold');
-      doc.text(value.value, 80, yPos);
-      doc.setFont('helvetica', 'normal');
-
-      doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-      doc.text(value.normal, 120, yPos);
-      doc.text(value.unit || '-', 170, yPos);
-
-      yPos += 7;
-      doc.setDrawColor(240, 240, 240);
-      doc.line(10, yPos - 2, 200, yPos - 2);
-    });
-  }
-
-  if (returnDataUrl) {
-    return doc.output('dataurlstring');
-  } else {
-    const fileName = `${report.test.replace(/[^a-z0-9]/gi, '_')}_${report.date.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-    doc.save(fileName);
-  }
-};
-
-// Generate Prescription PDF
-const generatePrescriptionPDF = (prescription: any, patientName: string, returnDataUrl: boolean = false): string | void => {
-  const doc = new jsPDF();
-  const primaryColor = [20, 120, 120];
-  const darkGray = [51, 51, 51];
-  const lightGray = [128, 128, 128];
-  let yPos = 20;
-
-  // Header
-  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.rect(0, 0, 210, 35, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.text('MediVerse Healthcare', 105, 15, { align: 'center' });
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'normal');
-  doc.text('E-Prescription', 105, 22, { align: 'center' });
-
-  yPos = 45;
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-  doc.text('PRESCRIPTION', 10, yPos);
-
-  yPos += 10;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(10, yPos, 200, yPos);
-  yPos += 8;
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-
-  const details = [
-    ['Date:', prescription.date],
-    ['Doctor:', prescription.doctor],
-    ['Specialty:', prescription.specialty || 'General'],
-    ['Diagnosis:', prescription.diagnosis],
-    ['Patient:', patientName],
-  ];
-
-  details.forEach(([label, value]) => {
-    doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-    doc.text(label, 10, yPos);
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.text(value, 50, yPos);
-    yPos += 6;
-  });
-
-  yPos += 5;
-
-  // Medications
-  if (prescription.medications && prescription.medications.length > 0) {
-    doc.setDrawColor(200, 200, 200);
-    doc.line(10, yPos, 200, yPos);
-    yPos += 8;
-
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.text('MEDICATIONS', 10, yPos);
-    yPos += 8;
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-
-    prescription.medications.forEach((med: string, index: number) => {
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
-      }
-
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.text(`${index + 1}. ${med}`, 15, yPos);
-      yPos += 7;
-    });
-  }
-
-  yPos += 5;
-
-  // Additional Notes
-  if (prescription.additionalNotes) {
-    if (yPos > 240) {
-      doc.addPage();
-      yPos = 20;
-    }
-
-    doc.setDrawColor(200, 200, 200);
-    doc.line(10, yPos, 200, yPos);
-    yPos += 8;
-
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.text('ADDITIONAL NOTES', 10, yPos);
-    yPos += 6;
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    const notes = doc.splitTextToSize(prescription.additionalNotes, 180);
-    doc.text(notes, 10, yPos);
-    yPos += notes.length * 5 + 5;
-  }
-
-  // Footer
-  if (yPos > 240) {
-    doc.addPage();
-    yPos = 20;
-  }
-
-  doc.setDrawColor(200, 200, 200);
-  doc.line(10, yPos, 200, yPos);
-  yPos += 8;
-
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'italic');
-  doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-  doc.text('This is an electronic prescription. Please consult with your pharmacist for any questions.', 10, yPos, { maxWidth: 190, align: 'justify' });
-  yPos += 8;
-  doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 10, yPos);
-
-  if (returnDataUrl) {
-    return doc.output('dataurlstring');
-  } else {
-    const fileName = `Prescription_${prescription.date.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-    doc.save(fileName);
-  }
 };
 
 export default DoctorDashboard;

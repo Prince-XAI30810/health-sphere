@@ -1,0 +1,26 @@
+{
+  "patients": [
+    {
+      "appointment_id": "6afb06a8-f2ab-4f39-937c-0b490f6b2c06",
+      "patient_id": "p1",
+      "patient_name": "Rahul Sharma",
+      "doctor_id": "doc1",
+      "appointment_date": "2026-01-12",
+      "appointment_time": "2:00 PM",
+      "status": "scheduled",
+      "triage_score": "high",
+      "summary": "Patient reports experiencing severe body pain rated 10/10 for the past 2 days.\nIt is recommended to consult with Dr.",
+      "key_points": [
+        "Patient reports experiencing severe body pain rated 10/10 for the past 2 days.",
+        "It is recommended to consult with Dr."
+      ],
+      "symptoms": "body pain",
+      "pain_rating": "10",
+      "chief_complaint": "body pain",
+      "age": null,
+      "gender": null,
+      "blood_group": null,
+      "created_at": "2026-01-12T02:51:04.323044"
+    }
+  ]
+}

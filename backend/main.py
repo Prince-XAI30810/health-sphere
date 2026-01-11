@@ -12,6 +12,7 @@ from api.triage import router as triage_router
 from api.appointments import router as appointments_router
 from api.medical_records import router as medical_records_router
 from api.patient_summary import router as patient_summary_router
+from api.doctor_chatbot import router as doctor_chatbot_router
 
 app = FastAPI(title="MediVerse API", version="1.0.0")
 
@@ -99,6 +100,7 @@ app.include_router(triage_router)
 app.include_router(appointments_router)
 app.include_router(medical_records_router)
 app.include_router(patient_summary_router)
+app.include_router(doctor_chatbot_router)
 
 
 if __name__ == "__main__":

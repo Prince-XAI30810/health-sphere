@@ -1,13 +1,13 @@
 {
-  "session_id": "94959e90-7eac-41da-abbb-8b92daac3197",
+  "session_id": "7c0098cd-3702-46ef-86ba-020b8370ed98",
   "user_id": null,
-  "created_at": "2026-01-12T02:05:29.704107",
+  "created_at": "2026-01-12T02:50:16.615252",
   "messages": [
     {
       "id": 1,
       "type": "bot",
       "content": "Hello! I'm MediVerse's AI Health Assistant. I'm here to help assess your symptoms and guide you to the right care. Let's start by understanding your health concern. What health issue or symptom are you experiencing today?",
-      "timestamp": "2026-01-12T02:05:29.704136",
+      "timestamp": "2026-01-12T02:50:16.615252",
       "metadata": {
         "question_type": "issue",
         "collected_info": {
@@ -20,15 +20,37 @@
     {
       "id": 2,
       "type": "user",
-      "content": "I am facing body pain",
-      "timestamp": "2026-01-12T02:05:48.697628",
+      "content": "hii ",
+      "timestamp": "2026-01-12T02:50:23.094818",
       "metadata": {}
     },
     {
       "id": 3,
       "type": "bot",
+      "content": "What health issue or symptom are you experiencing?",
+      "timestamp": "2026-01-12T02:50:23.094818",
+      "metadata": {
+        "question_type": "issue",
+        "collected_info": {
+          "issue": null,
+          "pain_rating": null,
+          "duration": null
+        },
+        "is_complete": false
+      }
+    },
+    {
+      "id": 4,
+      "type": "user",
+      "content": "i am having body pain ",
+      "timestamp": "2026-01-12T02:50:38.513417",
+      "metadata": {}
+    },
+    {
+      "id": 5,
+      "type": "bot",
       "content": "On a scale of 1 to 10, how would you rate your pain or discomfort? (1 being very mild and 10 being extremely severe)",
-      "timestamp": "2026-01-12T02:05:48.703127",
+      "timestamp": "2026-01-12T02:50:38.525967",
       "metadata": {
         "question_type": "pain_rating",
         "collected_info": {
@@ -40,45 +62,45 @@
       }
     },
     {
-      "id": 4,
+      "id": 6,
       "type": "user",
-      "content": "2",
-      "timestamp": "2026-01-12T02:05:53.754337",
+      "content": "10",
+      "timestamp": "2026-01-12T02:50:47.765684",
       "metadata": {}
     },
     {
-      "id": 5,
+      "id": 7,
       "type": "bot",
       "content": "How long have you been experiencing this? When did it start?",
-      "timestamp": "2026-01-12T02:05:53.759748",
+      "timestamp": "2026-01-12T02:50:47.773476",
       "metadata": {
         "question_type": "duration",
         "collected_info": {
           "issue": "body pain",
-          "pain_rating": 2,
+          "pain_rating": 10,
           "duration": null
         },
         "is_complete": false
       }
     },
     {
-      "id": 6,
+      "id": 8,
       "type": "user",
-      "content": "today",
-      "timestamp": "2026-01-12T02:05:59.385439",
+      "content": "2 days ago ",
+      "timestamp": "2026-01-12T02:50:53.863943",
       "metadata": {}
     },
     {
-      "id": 7,
+      "id": 9,
       "type": "bot",
       "content": "Based on your symptoms, I recommend consulting with Dr. Priya Patel, a General Physician.\n\n**Doctor Details:**\n- Name: Dr. Priya Patel\n- Specialty: General Physician\n- Qualifications: MBBS, MD (General Medicine)\n- Experience: 12 years\n- Rating: 4.8/5.0\n\n**Available Appointment Slots:**\n- 2026-01-12 at 10:00 AM\n- 2026-01-12 at 11:00 AM\n- 2026-01-12 at 2:00 PM\n",
-      "timestamp": "2026-01-12T02:05:59.390402",
+      "timestamp": "2026-01-12T02:50:53.872197",
       "metadata": {
         "question_type": null,
         "collected_info": {
           "issue": "body pain",
-          "pain_rating": 2,
-          "duration": "today"
+          "pain_rating": 10,
+          "duration": "2 days"
         },
         "is_complete": true,
         "recommended_doctor": {
@@ -123,8 +145,8 @@
   ],
   "collected_info": {
     "issue": "body pain",
-    "pain_rating": 2,
-    "duration": "today"
+    "pain_rating": 10,
+    "duration": "2 days"
   },
   "status": "completed"
 }

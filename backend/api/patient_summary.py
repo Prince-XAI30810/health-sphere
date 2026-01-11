@@ -77,7 +77,8 @@ async def get_patient_summary(request: PatientSummaryRequest):
             summary=result["summary"],
             medical_records=medical_records,
             appointments=appointments,
-            triage_sessions=triage_sessions
+            triage_sessions=triage_sessions,
+            patient_profile=result.get("patient_profile")
         )
         
     except HTTPException:

@@ -141,23 +141,68 @@ Generate the summary now:"""
         return prompt
     
     def generate_summary(self, patient_id: str, patient_name: str, patient_email: str) -> Dict:
-        """Generate patient summary for doctor"""
+        """Generate simple 2-line patient summary from appointments.json"""
         try:
             # Load all patient data
             appointments = self._load_appointments(patient_id)
             medical_records = self._load_medical_records(patient_id)
             triage_sessions = self._load_triage_sessions(patient_id)
             
-            # Build prompt
-            prompt = self._build_summary_prompt(patient_name, appointments, medical_records, triage_sessions)
+            # Get the most recent appointment
+            latest_appointment = None
+            if appointments:
+                # Sort by date and get the most recent
+                sorted_appointments = sorted(
+                    appointments, 
+                    key=lambda x: x.get('appointment_date', ''), 
+                    reverse=True
+                )
+                latest_appointment = sorted_appointments[0]
             
-            # Get LLM response
-            messages = [
-                {"role": "system", "content": "You are a medical assistant helping doctors prepare for patient consultations. Generate clear, concise, and professional patient summaries."},
-                {"role": "user", "content": prompt}
-            ]
-            
-            summary = self.llm.get_response(messages, json_mode=False)
+            # Create simple 2-line summary from appointments.json
+            patient_profile = None
+            if latest_appointment:
+                symptoms = latest_appointment.get('symptoms', '')
+                pain_rating = latest_appointment.get('pain_rating', '')
+                doctor_name = latest_appointment.get('doctor_name', '')
+                appointment_time = latest_appointment.get('appointment_time', '')
+                
+                # Get duration from triage session if available
+                duration = None
+                if latest_appointment.get('triage_session_id'):
+                    for session in triage_sessions:
+                        if session.get('session_id') == latest_appointment.get('triage_session_id'):
+                            collected_info = session.get('collected_info', {})
+                            duration = collected_info.get('duration')
+                            break
+                
+                # Line 1: Symptoms with duration
+                line1 = symptoms or "General consultation"
+                if duration:
+                    line1 = f"{symptoms} for {duration}" if symptoms else f"General consultation for {duration}"
+                
+                # Line 2: Pain level and doctor
+                if pain_rating:
+                    line2 = f"Pain level {pain_rating}/10"
+                else:
+                    line2 = "Consult with doctor"
+                
+                if doctor_name:
+                    line2 += f" - {doctor_name}"
+                
+                summary = f"{line1}\n{line2}"
+                
+                # Create patient profile
+                patient_profile = {
+                    "age": None,  # Not available in current data structure
+                    "gender": None,  # Not available in current data structure
+                    "blood_group": None,  # Not available in current data structure
+                    "appointment_time": appointment_time,
+                    "chief_complaint": symptoms
+                }
+            else:
+                # No appointments found
+                summary = f"Patient {patient_name}\nNo appointments scheduled"
             
             return {
                 "success": True,
@@ -167,7 +212,8 @@ Generate the summary now:"""
                 "summary": summary,
                 "appointments": appointments,
                 "medical_records": medical_records,
-                "triage_sessions": triage_sessions
+                "triage_sessions": triage_sessions,
+                "patient_profile": patient_profile
             }
             
         except Exception as e:
@@ -184,14 +230,103 @@ Generate the summary now:"""
                                            symptoms: Optional[str],
                                            pain_rating: Optional[str],
                                            appointment_date: str,
-                                           appointment_time: str) -> Dict:
-        """Generate patient summary for patient queue"""
+                                           appointment_time: str,
+                                           ai_summary: Optional[List[str]] = None) -> Dict:
+        """Generate simple 2-line patient summary for patient queue from appointments.json"""
         try:
-            # Load patient data
-            appointments = self._load_appointments(patient_id)
-            medical_records = self._load_medical_records(patient_id)
+            # Load appointment from appointments.json
+            appointment = None
+            if APPOINTMENTS_FILE.exists():
+                with open(APPOINTMENTS_FILE, 'r') as f:
+                    data = json.load(f)
+                    appointments_list = data.get('appointments', [])
+                    # Find the appointment by appointment_id
+                    for apt in appointments_list:
+                        if apt.get('appointment_id') == appointment_id:
+                            appointment = apt
+                            break
             
-            # Calculate triage score from pain rating
+            # Get symptoms and pain_rating from appointment if not provided
+            if appointment:
+                symptoms = symptoms or appointment.get('symptoms', '')
+                pain_rating = pain_rating or appointment.get('pain_rating', '')
+            
+            # Use passed-in ai_summary first (to avoid race condition), 
+            # then fall back to appointment's ai_summary if available
+            summary = None
+            key_points = []
+            if ai_summary and isinstance(ai_summary, list) and len(ai_summary) > 0:
+                # Use the directly passed ai_summary (2-line summary from LLM)
+                summary = '\n'.join(ai_summary)
+                # Use the ai_summary lines as key points for display
+                key_points = ai_summary.copy()
+            elif appointment and appointment.get('ai_summary') and isinstance(appointment.get('ai_summary'), list):
+                # Fallback: Use the ai_summary from appointment file
+                ai_summary_lines = appointment.get('ai_summary', [])
+                summary = '\n'.join(ai_summary_lines)
+                # Use the ai_summary lines as key points for display
+                key_points = ai_summary_lines.copy()
+            else:
+                # Fallback: Calculate triage score from pain rating
+                triage_score = "low"
+                if pain_rating:
+                    try:
+                        rating = int(pain_rating)
+                        if rating >= 7:
+                            triage_score = "high"
+                        elif rating >= 4:
+                            triage_score = "medium"
+                        else:
+                            triage_score = "low"
+                    except:
+                        pass
+                
+                # Get duration from triage session if available
+                duration = None
+                if appointment and appointment.get('triage_session_id'):
+                    try:
+                        triage_sessions = self._load_triage_sessions(patient_id)
+                        for session in triage_sessions:
+                            if session.get('session_id') == appointment.get('triage_session_id'):
+                                collected_info = session.get('collected_info', {})
+                                duration = collected_info.get('duration')
+                                break
+                    except:
+                        pass
+                
+                # Create simple 2-line summary from appointments.json data
+                # Line 1: Symptoms with duration if available
+                line1 = symptoms or "General consultation"
+                if duration:
+                    line1 = f"{symptoms} for {duration}" if symptoms else f"General consultation for {duration}"
+                
+                # Line 2: Pain level and doctor info
+                if pain_rating:
+                    line2 = f"Pain level {pain_rating}/10"
+                else:
+                    line2 = "Consult with doctor"
+                
+                # If doctor name is available, add it
+                if appointment and appointment.get('doctor_name'):
+                    doctor_name = appointment.get('doctor_name', '')
+                    line2 += f" - {doctor_name}"
+                
+                # Create simple 2-line summary
+                summary = f"{line1}\n{line2}"
+                
+                # Create key points from symptoms, pain rating, and duration
+                if symptoms and duration:
+                    key_points.append(f"{symptoms} for {duration}")
+                elif symptoms:
+                    key_points.append(symptoms)
+                if pain_rating:
+                    key_points.append(f"Pain level {pain_rating}/10")
+                if appointment and appointment.get('doctor_name'):
+                    doctor_name = appointment.get('doctor_name', '')
+                    specialty = "General Physician"  # Default, can be enhanced later
+                    key_points.append(f"Consult with {doctor_name}, {specialty}")
+            
+            # Calculate triage score from pain rating (needed for queue)
             triage_score = "low"
             if pain_rating:
                 try:
@@ -205,56 +340,23 @@ Generate the summary now:"""
                 except:
                     pass
             
-            # Build summary prompt
-            conversation_text = ""
-            if conversation_history:
-                conversation_text = "\n**Recent Conversation:**\n"
-                for msg in conversation_history[-10:]:  # Last 10 messages
-                    msg_type = msg.get("type", "unknown")
-                    content = msg.get("content", "")[:200]  # Limit length
-                    conversation_text += f"- {msg_type}: {content}\n"
+            # Get patient profile info from triage session if available
+            age = None
+            gender = None
+            blood_group = None
+            if appointment and appointment.get('triage_session_id'):
+                try:
+                    triage_sessions = self._load_triage_sessions(patient_id)
+                    for session in triage_sessions:
+                        if session.get('session_id') == appointment.get('triage_session_id'):
+                            collected_info = session.get('collected_info', {})
+                            # Try to extract from collected_info if available
+                            # For now, use defaults as these aren't collected in triage
+                            break
+                except:
+                    pass
             
-            records_summary = ""
-            if medical_records:
-                records_summary = f"\n**Medical History:** {len(medical_records)} records found. Recent: {medical_records[-1].get('title', 'N/A') if medical_records else 'N/A'}"
-            
-            prompt = f"""Generate a concise patient summary for a doctor's queue. Based on the following information:
-
-**Patient:** {patient_name}
-**Symptoms:** {symptoms or 'Not specified'}
-**Pain Rating:** {pain_rating or 'N/A'}/10
-**Triage Score:** {triage_score}
-{conversation_text}
-{records_summary}
-
-Create a brief 3-4 line summary highlighting:
-1. Main complaint/symptoms and duration
-2. Pain level and urgency assessment
-3. Recommended doctor and specialty
-4. Key context for consultation
-
-Requirements:
-- Keep the summary EXACTLY 3-4 lines, no more
-- Be concise and professional
-- Include pain rating and triage information
-
-Respond in JSON format:
-{{
-    "summary": "3-4 line patient summary",
-    "triage_score": "{triage_score}",
-    "key_points": ["point1", "point2", "point3"]
-}}"""
-            
-            # Get LLM response
-            messages = [
-                {"role": "system", "content": "You are a medical assistant. Generate concise patient summaries for doctors."},
-                {"role": "user", "content": prompt}
-            ]
-            
-            response = self.llm.get_response(messages, json_mode=True)
-            summary_data = json.loads(response)
-            
-            # Create queue entry
+            # Create queue entry with patient profile info
             queue_entry = {
                 "appointment_id": appointment_id,
                 "patient_id": patient_id,
@@ -263,11 +365,15 @@ Respond in JSON format:
                 "appointment_date": appointment_date,
                 "appointment_time": appointment_time,
                 "status": "scheduled",
-                "triage_score": summary_data.get("triage_score", triage_score),
-                "summary": summary_data.get("summary", f"Patient {patient_name} scheduled for {appointment_date} at {appointment_time}"),
-                "key_points": summary_data.get("key_points", []),
+                "triage_score": triage_score,
+                "summary": summary,
+                "key_points": key_points,
                 "symptoms": symptoms,
                 "pain_rating": pain_rating,
+                "chief_complaint": symptoms,  # Chief complaint is the symptoms
+                "age": age,  # Will be None if not available
+                "gender": gender,  # Will be None if not available
+                "blood_group": blood_group,  # Will be None if not available
                 "created_at": datetime.now().isoformat()
             }
             
@@ -287,6 +393,11 @@ Respond in JSON format:
                 except:
                     pass
             
+            # Create simple fallback summary
+            line1 = symptoms or "General consultation"
+            line2 = f"Pain level {pain_rating}/10" if pain_rating else "Consult with doctor"
+            summary = f"{line1}\n{line2}"
+            
             return {
                 "appointment_id": appointment_id,
                 "patient_id": patient_id,
@@ -296,7 +407,7 @@ Respond in JSON format:
                 "appointment_time": appointment_time,
                 "status": "scheduled",
                 "triage_score": triage_score,
-                "summary": f"Patient {patient_name} - {symptoms or 'No symptoms specified'}",
+                "summary": summary,
                 "key_points": [symptoms] if symptoms else [],
                 "symptoms": symptoms,
                 "pain_rating": pain_rating,

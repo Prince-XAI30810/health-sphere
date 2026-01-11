@@ -183,4 +183,5 @@ class PatientSummaryResponse(BaseModel):
     medical_records: List[MedicalRecordResponse]
     appointments: List[AppointmentResponse]
     triage_sessions: List[SessionSummary]
+    patient_profile: Optional[Dict] = None  # Age, gender, blood_group, appointment_time, chief_complaint
 

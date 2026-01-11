@@ -92,49 +92,53 @@ def load_past_appointments():
 def generate_appointment_notes(symptoms: Optional[str], conversation_history: List[Dict], 
                                pain_rating: Optional[str] = None) -> str:
     """
-    Generate concise 2-line appointment notes using LLM based on patient symptoms and conversation history
+    Generate concise 2-line appointment notes using LLM based on ENTIRE patient-triage conversation history
     """
     try:
         from services.patient_summary import PatientSummaryService
         summary_service = PatientSummaryService()
         
-        # Extract main issue from symptoms or conversation
-        main_issue = symptoms or ""
-        conversation_context = ""
+        # Build full conversation context from entire history
+        full_conversation = ""
+        if conversation_history and len(conversation_history) > 0:
+            # Format the entire conversation in a readable way
+            conversation_parts = []
+            for msg in conversation_history:
+                msg_type = msg.get("type", "")
+                msg_content = msg.get("content", "")
+                if msg_type == "user":
+                    conversation_parts.append(f"Patient: {msg_content}")
+                elif msg_type == "bot" or msg_type == "assistant":
+                    conversation_parts.append(f"Triage Agent: {msg_content}")
+            
+            # Join all conversation parts
+            full_conversation = "\n".join(conversation_parts)
+        else:
+            # If no conversation history, use symptoms as fallback
+            full_conversation = f"Patient reported: {symptoms or 'General health concern'}"
         
-        # Build conversation context from history
-        if conversation_history:
-            user_messages = [
-                msg.get("content", "") 
-                for msg in conversation_history 
-                if msg.get("type") == "user"
-            ]
-            if user_messages:
-                conversation_context = " ".join(user_messages[:3])  # Take first 3 user messages
-                if not main_issue:
-                    main_issue = user_messages[0][:200] if user_messages else ""
-        
-        # Build comprehensive prompt for LLM
-        prompt = f"""You are a medical assistant creating appointment notes for a doctor. Based on the patient information below, generate exactly 2 lines (2 sentences) summarizing the patient's health concern.
+        # Build comprehensive prompt for LLM with entire conversation
+        prompt = f"""You are a medical assistant creating appointment notes for a doctor. Based on the ENTIRE conversation between the patient and triage agent below, generate exactly 2 lines (2 sentences) summarizing the patient's health concern.
 
 Requirements:
 - Exactly 2 lines, no more, no less
 - Plain text only, no markdown formatting
 - Professional but patient-friendly language
-- First line: Main health concern/symptoms
-- Second line: Additional context (pain level, duration, or other relevant details)
+- First line: Main health concern/symptoms with duration if mentioned
+- Second line: Additional context (pain level, severity, or other relevant details) and doctor recommendation
 
-Patient Information:
-- Symptoms/Issue: {main_issue or 'Not specified'}
+Full Conversation History:
+{full_conversation}
+
+Additional Information:
 - Pain Rating: {pain_rating or 'Not specified'}/10
-- Conversation Context: {conversation_context[:300] if conversation_context else 'No additional context'}
 
-Generate exactly 2 lines of appointment notes:"""
+Generate exactly 2 lines of appointment notes based on the entire conversation:"""
         
         messages = [
             {
                 "role": "system", 
-                "content": "You are a medical assistant. Generate concise, professional appointment notes in exactly 2 lines. Use plain text only, no markdown formatting."
+                "content": "You are a medical assistant. Generate concise, professional appointment notes in exactly 2 lines based on the full patient-triage conversation. Use plain text only, no markdown formatting. Focus on the key health concerns and relevant details mentioned throughout the conversation."
             },
             {
                 "role": "user", 
@@ -166,7 +170,8 @@ Generate exactly 2 lines of appointment notes:"""
                     result = f"{lines[0]}\nAppointment scheduled for consultation."
             else:
                 # Fallback
-                result = f"Patient consultation scheduled.\nHealth concern: {main_issue[:100] if main_issue else 'General health issue'}."
+                main_issue = symptoms or "General health concern"
+                result = f"Patient consultation regarding: {main_issue[:100]}.\nPain rating: {pain_rating or 'Not specified'}/10."
             
             # Ensure result is not too long (max 250 chars per line)
             result_lines = result.split('\n')
@@ -178,17 +183,19 @@ Generate exactly 2 lines of appointment notes:"""
                 return result
         else:
             # Fallback if LLM returns empty
-            if main_issue:
-                return f"Patient consultation regarding: {main_issue[:100]}.\nPain rating: {pain_rating or 'Not specified'}/10."
-            return "Appointment scheduled via AI Triage.\nPatient consultation for health concern."
+            main_issue = symptoms or "General health concern"
+            if pain_rating:
+                return f"Patient consultation regarding: {main_issue[:100]}.\nPain rating: {pain_rating}/10."
+            return f"Patient consultation regarding: {main_issue[:100]}.\nAppointment scheduled for evaluation."
         
     except Exception as e:
         import logging
         logging.error(f"Error generating appointment notes with LLM: {e}", exc_info=True)
         # Fallback to simple summary
-        if symptoms:
-            return f"Patient consultation regarding: {symptoms[:100]}.\nAppointment scheduled for evaluation."
-        return "Appointment scheduled via AI Triage.\nPatient consultation for health concern."
+        main_issue = symptoms or "General health concern"
+        if pain_rating:
+            return f"Patient consultation regarding: {main_issue[:100]}.\nPain rating: {pain_rating}/10."
+        return f"Patient consultation regarding: {main_issue[:100]}.\nAppointment scheduled for evaluation."
 
 
 @router.post("/schedule", response_model=ScheduleAppointmentResponse)
@@ -219,12 +226,15 @@ async def schedule_appointment(request: ScheduleAppointmentRequest):
                 import logging
                 logging.warning(f"Could not load conversation history: {e}")
         
-        # Generate simple appointment notes (2-line summary)
+        # Generate AI-powered 2-line summary from entire conversation
         appointment_notes = generate_appointment_notes(
             symptoms=request.symptoms,
             conversation_history=conversation_history,
             pain_rating=request.pain_rating
         )
+        
+        # Split the 2-line summary into a list for ai_summary field
+        ai_summary_lines = [line.strip() for line in appointment_notes.split('\n') if line.strip()]
         
         # Create new appointment
         appointment_id = str(uuid.uuid4())
@@ -238,11 +248,12 @@ async def schedule_appointment(request: ScheduleAppointmentRequest):
             appointment_date=request.appointment_date,
             appointment_time=request.appointment_time,
             status="scheduled",
-            reason=appointment_notes,  # Use generated simple summary instead of full recommendation
+            reason=appointment_notes,  # Store 2-line summary in reason field
             created_at=datetime.now().isoformat(),
             triage_session_id=request.triage_session_id,
             symptoms=request.symptoms,
-            pain_rating=request.pain_rating
+            pain_rating=request.pain_rating,
+            ai_summary=ai_summary_lines  # Also store as list for frontend display
         )
         
         # Add to list
@@ -258,7 +269,7 @@ async def schedule_appointment(request: ScheduleAppointmentRequest):
             
             # Use conversation_history already loaded above
             
-            # Generate patient summary
+            # Generate patient summary - pass ai_summary directly to avoid race condition
             patient_summary = summary_service.generate_patient_summary_for_queue(
                 patient_id=request.patient_id,
                 patient_name=request.patient_name,
@@ -268,7 +279,8 @@ async def schedule_appointment(request: ScheduleAppointmentRequest):
                 symptoms=request.symptoms,
                 pain_rating=request.pain_rating,
                 appointment_date=request.appointment_date,
-                appointment_time=request.appointment_time
+                appointment_time=request.appointment_time,
+                ai_summary=ai_summary_lines  # Pass ai_summary directly
             )
             
             # Add to patient queue
