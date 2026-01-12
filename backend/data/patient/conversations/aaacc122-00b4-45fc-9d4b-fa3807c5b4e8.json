@@ -1,0 +1,152 @@
+{
+  "session_id": "aaacc122-00b4-45fc-9d4b-fa3807c5b4e8",
+  "user_id": null,
+  "created_at": "2026-01-12T07:40:21.958583",
+  "messages": [
+    {
+      "id": 1,
+      "type": "bot",
+      "content": "Hello! I'm MediVerse's AI Health Assistant. I'm here to help assess your symptoms and guide you to the right care. Let's start by understanding your health concern. What health issue or symptom are you experiencing today?",
+      "timestamp": "2026-01-12T07:40:21.958645",
+      "metadata": {
+        "question_type": "issue",
+        "collected_info": {
+          "issue": null,
+          "severity": null,
+          "duration": null
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "user",
+      "content": "hello",
+      "timestamp": "2026-01-12T07:40:28.511357",
+      "metadata": {}
+    },
+    {
+      "id": 3,
+      "type": "bot",
+      "content": "What health issue or symptom are you experiencing?",
+      "timestamp": "2026-01-12T07:40:28.515567",
+      "metadata": {
+        "question_type": "issue",
+        "collected_info": {
+          "issue": null,
+          "pain_rating": null,
+          "duration": null
+        },
+        "is_complete": false
+      }
+    },
+    {
+      "id": 4,
+      "type": "user",
+      "content": "fever",
+      "timestamp": "2026-01-12T07:40:39.847520",
+      "metadata": {}
+    },
+    {
+      "id": 5,
+      "type": "bot",
+      "content": "On a scale of 1 to 10, how would you rate your pain or discomfort? (1 being very mild and 10 being extremely severe)",
+      "timestamp": "2026-01-12T07:40:39.851429",
+      "metadata": {
+        "question_type": "pain_rating",
+        "collected_info": {
+          "issue": "fever",
+          "pain_rating": null,
+          "duration": null
+        },
+        "is_complete": false
+      }
+    },
+    {
+      "id": 6,
+      "type": "user",
+      "content": "3",
+      "timestamp": "2026-01-12T07:40:44.987653",
+      "metadata": {}
+    },
+    {
+      "id": 7,
+      "type": "bot",
+      "content": "How long have you been experiencing this? When did it start?",
+      "timestamp": "2026-01-12T07:40:44.992839",
+      "metadata": {
+        "question_type": "duration",
+        "collected_info": {
+          "issue": "fever",
+          "pain_rating": 3,
+          "duration": null
+        },
+        "is_complete": false
+      }
+    },
+    {
+      "id": 8,
+      "type": "user",
+      "content": "today",
+      "timestamp": "2026-01-12T07:40:52.866752",
+      "metadata": {}
+    },
+    {
+      "id": 9,
+      "type": "bot",
+      "content": "Based on your symptoms, I recommend consulting with Dr. Priya Patel, a General Physician.\n\n**Doctor Details:**\n- Name: Dr. Priya Patel\n- Specialty: General Physician\n- Qualifications: MBBS, MD (General Medicine)\n- Experience: 12 years\n- Rating: 4.8/5.0\n\n**Available Appointment Slots:**\n- 2026-01-12 at 10:00 AM\n- 2026-01-12 at 11:00 AM\n- 2026-01-12 at 2:00 PM\n",
+      "timestamp": "2026-01-12T07:40:52.871329",
+      "metadata": {
+        "question_type": null,
+        "collected_info": {
+          "issue": "fever",
+          "pain_rating": 3,
+          "duration": "today"
+        },
+        "is_complete": true,
+        "recommended_doctor": {
+          "id": "doc1",
+          "name": "Dr. Priya Patel",
+          "specialty": "General Physician",
+          "qualifications": "MBBS, MD (General Medicine)",
+          "experience": "12 years",
+          "rating": 4.8,
+          "available_slots": [
+            {
+              "date": "2026-01-12",
+              "time": "10:00 AM",
+              "available": true
+            },
+            {
+              "date": "2026-01-12",
+              "time": "11:00 AM",
+              "available": true
+            },
+            {
+              "date": "2026-01-12",
+              "time": "2:00 PM",
+              "available": true
+            },
+            {
+              "date": "2026-01-13",
+              "time": "9:00 AM",
+              "available": true
+            },
+            {
+              "date": "2026-01-13",
+              "time": "10:30 AM",
+              "available": true
+            }
+          ],
+          "phone": "+91 98765 43210",
+          "email": "dr.priya@mediverse.com"
+        }
+      }
+    }
+  ],
+  "collected_info": {
+    "issue": "fever",
+    "pain_rating": 3,
+    "duration": "today"
+  },
+  "status": "completed"
+}
