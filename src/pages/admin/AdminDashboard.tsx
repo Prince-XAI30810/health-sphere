@@ -26,10 +26,10 @@ import {
 } from 'lucide-react';
 
 const bedStats = {
-  total: 120,
-  occupied: 87,
-  available: 28,
-  reserved: 5,
+  total: 19,
+  occupied: 9,
+  available: 7,
+  reserved: 2,
 };
 
 

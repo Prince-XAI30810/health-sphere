@@ -242,7 +242,7 @@ const immunizations = [
         id: 2,
         vaccine: 'Tetanus Booster',
         date: 'Mar 12, 2024',
-        provider: 'Apollo Hospital',
+        provider: 'City Health Clinic',
         nextDue: 'Mar 12, 2034',
     },
     {
